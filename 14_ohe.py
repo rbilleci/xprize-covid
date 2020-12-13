@@ -13,8 +13,16 @@ def one_hot_encode(dataset, fn_in, fn_out):
     for e in df.items():
         name, series = e[0], e[1]
         if covid_types.is_boolean(name):
+
             df = df.join(pd.get_dummies(series.fillna(2.0).astype('int64'), prefix=f"{name}_class", dtype=np.float64))
             df = df.drop(name, axis=1)
+            # So that all datasets have the same number of columns, add missing columns that get_dummies may not catch
+            if f"{name}_class_0" not in df:
+                df[f"{name}_class_0"] = 0.0
+            if f"{name}_class_1" not in df:
+                df[f"{name}_class_1"] = 0.0
+            if f"{name}_class_2" not in df:
+                df[f"{name}_class_2"] = 0.0
         if covid_types.is_class(name):
             df = df.join(pd.get_dummies(series, prefix=name, dtype=np.float64))
             df = df.drop(name, axis=1)

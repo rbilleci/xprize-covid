@@ -1,0 +1,5 @@
+pandas~=1.1.5
+numpy~=1.19.4
+pycountry~=20.7.3
+workalendar~=14.1.0
+Keras~=2.4.3

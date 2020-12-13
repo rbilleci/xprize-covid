@@ -28,6 +28,16 @@ def read_internal(fn, date_field, date_format):
                        error_bad_lines=False)
 
 
+def read_prepared_dataset(fn):
+    na_values = ["", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN",
+                 "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>", "N/A",
+                 "NULL", "NaN", "n/a", "nan", "null"]
+    return pd.read_csv(f"data/{fn}",
+                       na_values=na_values,
+                       keep_default_na=False,
+                       error_bad_lines=False)
+
+
 def write(df, fn, dataset=None):
     # Perform a sort of column values
     df = df.reindex(sorted(df.columns), axis=1)

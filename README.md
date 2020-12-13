@@ -1,28 +1,29 @@
-SATURDAY:
-
-* github
-* time plan
-* new kb cable?
-* PREPARE UPWORK
-* clean aws account
 
 ------------------------------------------------------------------------------------------------
 SUNDAY:
+* bootstrap to work in actual environment
+* time plan
+* review: https://www.datacamp.com/community/tutorials/deep-learning-python  
+* fix inputs (RESEARCH: add cleaning, sanity checks, validation)
+* new kb cable?
+* test normalization of 0 to 1
 
+# review tutorials: https://www.tensorflow.org/tutorials/keras/regressionx
+* PREPARE UPWORK
 * plot our work for a country to make sure the data manipulation is ok COMMIT UPWORK get it running on the beast
 * data might change for countries, so we must AT MINIMUM find a way to hash them!... anything where data can be added
 * with so many classes, we may need to hash them
-
-            * filter out unknown columns on initial read
-            * filter out unknown columns in final output
-            * sanity check at each stage on the columns we are reading or writing!!!
-            * better scaling of fields with order-of-magnitude values
-            * check for missing days, fill them in if they are gone?
-            * sanity checks at every stage
+    * filter out unknown columns on initial read
+    * filter out unknown columns in final output
+    * sanity check at each stage on the columns we are reading or writing!!!
+    * better scaling of fields with order-of-magnitude values
+    * check for missing days, fill them in if they are gone?
+    * sanity checks at every stage
 * extract some key properties out to a single file, like training ratio splits
 * double check the training ratio splits
 * work on our basic type system/naming scheme, simple helper tools to map logical name to real name
-
+* factor out country generation to a separate file
+* get a notebook to explore the data
 ------------------------------------------------------------------------------------------------
 
 * fault tolerance: inject new columns, add new columns to test reliability
@@ -37,10 +38,7 @@ SUNDAY:
     * move to 7 day rmse?
     * think better about the split
     * see how evaluation is done in the examples, to compare
-
-# experiments
-
-# REVIEW https://en.wikipedia.org/wiki/Timeline_of_the_COVID-19_pandemic_in_2019
+* REVIEW https://en.wikipedia.org/wiki/Timeline_of_the_COVID-19_pandemic_in_2019
 ------------------------------------------------------------------------------------------------        
 
 # TEST IN ENVIRONMETN CONSTRAINTS
@@ -67,10 +65,6 @@ SUNDAY:
     * compare results with reference implementation!
 
 ------------------------------------------------------------------------------------------------
-
-# platform
-
-    * framework for evaluating tons of different alogorhtms and approaches automagically
 
 ------------------------------------------------------------------------------------------------
 
@@ -134,7 +128,7 @@ SUNDAY:
 * is the data balanced?
 * what if we treat each countries data independently, to get more data, and then blend results?
 * working day calculation is too slow!
-
+* find best optimizer
 # Stretch Goals
 
     * cycles of other calendars, ramadan, ...
