@@ -1,3 +1,4 @@
 /data/**
 /venv/**
 /**/*.log
+/work.tar.gz
