@@ -1,5 +1,6 @@
 import datetime
 import logging as log
+import predict_util
 
 
 def initialize() -> None:
@@ -20,4 +21,11 @@ def predict(start_date_str: str,
     log.info(f"parsed start date as: {start_date}")
     log.info(f"parsed end date as: {end_date}")
     log.info(f"reading input file {fn_in}")
+
+    for prediction_date in predict_util.date_range(start_date, end_date, True):
+        predict_day(prediction_date)
     return None
+
+
+def predict_day(prediction_date):
+    log.info(prediction_date)
