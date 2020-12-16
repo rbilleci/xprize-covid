@@ -17,14 +17,14 @@ import df_pipeline
 
 class HP:
     kernel_initializer = 'glorot_uniform'
-    optimizer = tf.keras.optimizers.Adam()
+    optimizer = tf.keras.optimizers.Nadam()
     metrics = [tf.keras.metrics.RootMeanSquaredError()]
     loss = tf.keras.losses.MeanSquaredError()
     hidden_layer_size = 200
     hidden_layer_count = 2
     hidden_layer_dropout = False
     hidden_layer_dropout_rate = 0.8
-    output_layer_activation = 'tanh'
+    output_layer_activation = 'sigmoid'  # None
     days_for_validation = 24
     days_for_test = 21
     training_epochs = 10000
@@ -73,8 +73,7 @@ def get_model_lrelu(model, dimensions) -> None:
 def get_model(dimensions):
     model = Sequential()
     get_model_prelu(model, dimensions)
-    #model.add(Dense(1, kernel_initializer=HP.kernel_initializer, activation=HP.output_layer_activation))
-    model.add(Dense(1, kernel_initializer=HP.kernel_initializer))
+    model.add(Dense(1, kernel_initializer=HP.kernel_initializer, activation=HP.output_layer_activation))
     model.compile(loss=HP.loss, optimizer=HP.optimizer, metrics=HP.metrics)
     print(model.summary())
     return model
