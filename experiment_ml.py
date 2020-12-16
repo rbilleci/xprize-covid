@@ -16,16 +16,18 @@ import df_pipeline
 
 
 class HP:
-    kernel_initializer = 'random_normal'
+    kernel_initializer = 'glorot_uniform'
     optimizer = tf.keras.optimizers.Nadam()
     metrics = [tf.keras.metrics.RootMeanSquaredError()]
     loss = tf.keras.losses.MeanSquaredError()
-    hidden_layer_size = 100
+    hidden_layer_size = 200
     hidden_layer_count = 2
+    output_layer_activation = 'tanh'
     days_for_validation = 24
     days_for_test = 21
     training_epochs = 1000
     training_batch_size = 16
+    verbose = 2
 
 
 def get_model_elu(model, dimensions) -> None:
@@ -36,7 +38,6 @@ def get_model_elu(model, dimensions) -> None:
         else:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
         model.add(ELU(alpha=alpha))
-    model.add(Dense(1, kernel_initializer=HP.kernel_initializer))
 
 
 def get_model_prelu(model, dimensions) -> None:
@@ -46,7 +47,6 @@ def get_model_prelu(model, dimensions) -> None:
         else:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
         model.add(PReLU())
-    model.add(Dense(1, kernel_initializer=HP.kernel_initializer))
 
 
 def get_model_lrelu(model, dimensions) -> None:
@@ -57,12 +57,12 @@ def get_model_lrelu(model, dimensions) -> None:
         else:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
         model.add(LeakyReLU(alpha=alpha))
-    model.add(Dense(1, kernel_initializer=HP.kernel_initializer))
 
 
 def get_model(dimensions):
     model = Sequential()
-    get_model_lrelu(model, dimensions)
+    get_model_prelu(model, dimensions)
+    model.add(Dense(1, kernel_initializer=HP.kernel_initializer, activation=HP.output_layer_activation))
     model.compile(loss=HP.loss, optimizer=HP.optimizer, metrics=HP.metrics)
     print(model.summary())
     return model
@@ -94,7 +94,7 @@ def train():
               verbose=2)
 
     print("predicting")
-    score = model.evaluate(test_x, test_y, verbose=2)
+    score = model.evaluate(test_x, test_y, verbose=HP.verbose)
 
     for i in range(0, 100):
         tx = train_x.iloc[i]
