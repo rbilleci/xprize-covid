@@ -22,6 +22,8 @@ class HP:
     loss = tf.keras.losses.MeanSquaredError()
     hidden_layer_size = 200
     hidden_layer_count = 2
+    hidden_layer_dropout = False
+    hidden_layer_dropout_rate = 0.4
     output_layer_activation = 'tanh'
     days_for_validation = 24
     days_for_test = 21
@@ -32,35 +34,45 @@ class HP:
 
 def get_model_elu(model, dimensions) -> None:
     alpha = 0.1
-    for i in range(0, HP.hidden_layer_count):
+    for i in range(1, HP.hidden_layer_count):
         if i == 0:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
         else:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
         model.add(ELU(alpha=alpha))
+        # add dropout
+        if HP.hidden_layer_dropout:
+            model.add(Dropout(HP.hidden_layer_dropout_rate))
 
 
 def get_model_prelu(model, dimensions) -> None:
-    for i in range(0, HP.hidden_layer_count):
+    for i in range(1, HP.hidden_layer_count):
         if i == 0:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
         else:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
         model.add(PReLU())
+        # add dropout
+        if HP.hidden_layer_dropout:
+            model.add(Dropout(HP.hidden_layer_dropout_rate))
 
 
 def get_model_lrelu(model, dimensions) -> None:
     alpha = 0.1
-    for i in range(0, HP.hidden_layer_count):
+    for i in range(1, HP.hidden_layer_count):
         if i == 0:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
         else:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
         model.add(LeakyReLU(alpha=alpha))
+        # add dropout
+        if HP.hidden_layer_dropout:
+            model.add(Dropout(HP.hidden_layer_dropout_rate))
 
 
 def get_model(dimensions):
     model = Sequential()
+    model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
     get_model_prelu(model, dimensions)
     model.add(Dense(1, kernel_initializer=HP.kernel_initializer, activation=HP.output_layer_activation))
     model.compile(loss=HP.loss, optimizer=HP.optimizer, metrics=HP.metrics)
