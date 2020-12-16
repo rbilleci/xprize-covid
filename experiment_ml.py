@@ -17,24 +17,24 @@ import df_pipeline
 
 class HP:
     kernel_initializer = 'glorot_uniform'
-    optimizer = tf.keras.optimizers.Nadam()
+    optimizer = tf.keras.optimizers.Adam()
     metrics = [tf.keras.metrics.RootMeanSquaredError()]
     loss = tf.keras.losses.MeanSquaredError()
     hidden_layer_size = 200
     hidden_layer_count = 2
     hidden_layer_dropout = False
-    hidden_layer_dropout_rate = 0.4
+    hidden_layer_dropout_rate = 0.8
     output_layer_activation = 'tanh'
     days_for_validation = 24
     days_for_test = 21
-    training_epochs = 1000
-    training_batch_size = 16
+    training_epochs = 10000
+    training_batch_size = 32
     verbose = 2
 
 
 def get_model_elu(model, dimensions) -> None:
     alpha = 0.1
-    for i in range(1, HP.hidden_layer_count):
+    for i in range(0, HP.hidden_layer_count):
         if i == 0:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
         else:
@@ -46,7 +46,7 @@ def get_model_elu(model, dimensions) -> None:
 
 
 def get_model_prelu(model, dimensions) -> None:
-    for i in range(1, HP.hidden_layer_count):
+    for i in range(0, HP.hidden_layer_count):
         if i == 0:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
         else:
@@ -59,7 +59,7 @@ def get_model_prelu(model, dimensions) -> None:
 
 def get_model_lrelu(model, dimensions) -> None:
     alpha = 0.1
-    for i in range(1, HP.hidden_layer_count):
+    for i in range(0, HP.hidden_layer_count):
         if i == 0:
             model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
         else:
@@ -72,9 +72,9 @@ def get_model_lrelu(model, dimensions) -> None:
 
 def get_model(dimensions):
     model = Sequential()
-    model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
     get_model_prelu(model, dimensions)
-    model.add(Dense(1, kernel_initializer=HP.kernel_initializer, activation=HP.output_layer_activation))
+    #model.add(Dense(1, kernel_initializer=HP.kernel_initializer, activation=HP.output_layer_activation))
+    model.add(Dense(1, kernel_initializer=HP.kernel_initializer))
     model.compile(loss=HP.loss, optimizer=HP.optimizer, metrics=HP.metrics)
     print(model.summary())
     return model
