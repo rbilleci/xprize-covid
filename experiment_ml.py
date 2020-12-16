@@ -20,52 +20,49 @@ class HP:
     optimizer = tf.keras.optimizers.Nadam()
     metrics = [tf.keras.metrics.RootMeanSquaredError()]
     loss = tf.keras.losses.MeanSquaredError()
-    neurons = 1000
-    neuron_layers = 2
+    hidden_layer_size = 100
+    hidden_layer_count = 2
     days_for_validation = 24
     days_for_test = 21
+    training_epochs = 1000
+    training_batch_size = 16
 
 
-def reference_model_elu(dimensions) -> Sequential:
-    model = Sequential()
+def get_model_elu(model, dimensions) -> None:
     alpha = 0.1
-    model.add(Dense(HP.neurons, input_dim=dimensions, kernel_initializer=HP.kernel_initializer))
-    model.add(ELU(alpha=alpha))
-    model.add(Dense(100, kernel_initializer=HP.kernel_initializer))
-    model.add(ELU(alpha=alpha))
-    model.add(Dense(10, kernel_initializer=HP.kernel_initializer))
-    model.add(ELU(alpha=alpha))
+    for i in range(0, HP.hidden_layer_count):
+        if i == 0:
+            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
+        else:
+            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
+        model.add(ELU(alpha=alpha))
     model.add(Dense(1, kernel_initializer=HP.kernel_initializer))
-    model.add(ELU(alpha=alpha))
-    model.compile(loss=HP.loss, optimizer=HP.optimizer, metrics=HP.metrics)
-    print(model.summary())
-    return model
 
 
-def reference_model_prelu(dimensions) -> Sequential:
-    model = Sequential()
-    model.add(Dense(HP.neurons, input_dim=dimensions, kernel_initializer=HP.kernel_initializer))
-    model.add(PReLU())
-    model.add(Dense(100, kernel_initializer=HP.kernel_initializer))
-    model.add(PReLU())
-    model.add(Dense(10, kernel_initializer=HP.kernel_initializer))
-    model.add(PReLU())
+def get_model_prelu(model, dimensions) -> None:
+    for i in range(0, HP.hidden_layer_count):
+        if i == 0:
+            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
+        else:
+            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
+        model.add(PReLU())
     model.add(Dense(1, kernel_initializer=HP.kernel_initializer))
-    model.compile(loss=HP.loss, optimizer=HP.optimizer, metrics=HP.metrics)
-    print(model.summary())
-    return model
 
 
-def reference_model_lrelu(dimensions) -> Sequential:
-    model = Sequential()
+def get_model_lrelu(model, dimensions) -> None:
     alpha = 0.1
-    model.add(Dense(HP.neurons, input_dim=dimensions, kernel_initializer=HP.kernel_initializer))
-    model.add(LeakyReLU(alpha=alpha))
-    model.add(Dense(100, kernel_initializer=HP.kernel_initializer))
-    model.add(LeakyReLU(alpha=alpha))
-    model.add(Dense(10, kernel_initializer=HP.kernel_initializer))
-    model.add(LeakyReLU(alpha=alpha))
+    for i in range(0, HP.hidden_layer_count):
+        if i == 0:
+            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
+        else:
+            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
+        model.add(LeakyReLU(alpha=alpha))
     model.add(Dense(1, kernel_initializer=HP.kernel_initializer))
+
+
+def get_model(dimensions):
+    model = Sequential()
+    get_model_lrelu(model, dimensions)
     model.compile(loss=HP.loss, optimizer=HP.optimizer, metrics=HP.metrics)
     print(model.summary())
     return model
@@ -80,25 +77,29 @@ def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Da
     return tr.iloc[:, 1:], tr.iloc[:, :1], v.iloc[:, 1:], v.iloc[:, :1], test.iloc[:, 1:], test.iloc[:, :1]
 
 
-# Get the data
-train_x, train_y, validation_x, validation_y, test_x, test_y = get_data()
+def train():
+    # Get the data
+    train_x, train_y, validation_x, validation_y, test_x, test_y = get_data()
 
-# Get the model
-model = reference_model_lrelu(train_x.shape[1])
+    # Get the model
+    model = get_model(train_x.shape[1])
 
-# Train the model
-print("fitting model")
-model.fit(train_x,
-          train_y,
-          validation_data=(validation_x, validation_y),
-          batch_size=16,
-          epochs=10000,
-          verbose=2)
+    # Train the model
+    print("fitting model")
+    model.fit(train_x,
+              train_y,
+              validation_data=(validation_x, validation_y),
+              batch_size=HP.training_batch_size,
+              epochs=HP.training_epochs,
+              verbose=2)
 
-print("predicting")
-score = model.evaluate(test_x, test_y, verbose=2)
+    print("predicting")
+    score = model.evaluate(test_x, test_y, verbose=2)
 
-for i in range(0, 100):
-    tx = train_x.iloc[i]
-    ty = train_y.iloc[i]
-    print(f"{model.predict(np.array([tx]))[0][0] * 1e6}\t\t{1e6 * ty['_label']}")
+    for i in range(0, 100):
+        tx = train_x.iloc[i]
+        ty = train_y.iloc[i]
+        print(f"{model.predict(np.array([tx]))[0][0] * 1e6}\t\t{1e6 * ty['_label']}")
+
+
+train()
