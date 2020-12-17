@@ -1,6 +1,3 @@
-# from https://machinelearningmastery.com/tutorial-first-neural-network-python-keras/
-# first neural network with keras tutorial
-# https://github.com/tensorflow/tensorflow/issues/18652
 from keras.models import Sequential
 from keras.layers import Dropout
 from keras.layers import Dense
@@ -23,13 +20,13 @@ class HP:
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()
     LAYER_SIZE = 200  # 200
-    LAYERS = 2  #
+    LAYERS = 2  # 2
     LAYER_DROPOUT = False
-    LAYER_DROPOUT_RATE = 0.25
+    LAYER_DROPOUT_RATE = 0.1
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
-    DAYS_FOR_VALIDATION = 28  # 24
-    DAYS_FOR_TEST = 14  # 21
-    TRAINING_EPOCHS = 20
+    DAYS_FOR_VALIDATION = 31  # 31
+    DAYS_FOR_TEST = 14  # 14
+    TRAINING_EPOCHS = 10000
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
     EARLY_STOPPING_PATIENCE = 20
