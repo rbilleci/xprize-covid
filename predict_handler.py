@@ -1,6 +1,6 @@
 import datetime
 import logging as log
-
+import os
 import predict_io
 import predict_util
 
@@ -11,6 +11,12 @@ def predict(start_date_str: str,
             end_date_str: str,
             path_future_data: str,
             path_output_file: str) -> None:
+    # Check the path, since the instructions are not really clear how bootstrap.sh is called
+    log.info(f"working directory is: {os.getcwd()}")
+    if os.getcwd() == '/home/xprize':
+        log.info('changing working directory to /home/xprize/work')
+        os.chdir('/home/xprize/work')
+
     # Perform sanity checks
     log.info(f"predicting {start_date_str} - {end_date_str} for '{path_future_data}' with output '{path_output_file}'")
     start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
