@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import datasets
+from datasets import datasets
 
 
 def apply(df: pd.DataFrame) -> pd.DataFrame:

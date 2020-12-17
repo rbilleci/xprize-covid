@@ -1,7 +1,7 @@
 import pandas as pd
 import pycountry_convert
 from workalendar.registry import registry
-import oxford_loader
+from loader import oxford_loader
 from datetime import timedelta
 import datetime
 

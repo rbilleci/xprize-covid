@@ -1,13 +1,9 @@
 # from https://machinelearningmastery.com/tutorial-first-neural-network-python-keras/
 # first neural network with keras tutorial
-from sklearn import svm
 from sklearn import tree
-from sklearn import linear_model
 from sklearn.metrics import r2_score
-from sklearn.metrics import classification_report, confusion_matrix
 
-
-import df_pipeline
+from pipeline import df_pipeline
 
 train, validation, test = df_pipeline.process_for_training('OxCGRT_latest.csv', 24, 10)
 train = train.sample(frac=1).reset_index(drop=True)

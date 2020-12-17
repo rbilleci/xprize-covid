@@ -2,8 +2,8 @@ import pandas as pd
 
 
 def split(df: pd.DataFrame,
-          days_for_validation: int, # TODO: HYPERPARAMETER
-          days_for_test: int) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame): # TODO: HYPERPARAMETER
+          days_for_validation: int,
+          days_for_test: int) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     # First, sort the data by date
     df = df.sort_values('date')
 

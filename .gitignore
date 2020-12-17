@@ -2,3 +2,7 @@
 /venv/**
 /**/*.log
 /work.tar.gz
+*.log
+/tests/model/
+/tests/model/**
+/tests/

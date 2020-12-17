@@ -2,8 +2,7 @@
 # first neural network with keras tutorial
 # https://github.com/tensorflow/tensorflow/issues/18652
 from keras.models import Sequential
-from keras.layers import GaussianDropout
-from keras.layers import AlphaDropout, Dropout
+from keras.layers import Dropout
 from keras.layers import Dense
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.advanced_activations import ELU
@@ -12,7 +11,7 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 
-import df_pipeline
+from pipeline import df_pipeline
 
 
 class HP:
@@ -23,11 +22,11 @@ class HP:
     hidden_layer_size = 200
     hidden_layer_count = 2
     hidden_layer_dropout = False
-    hidden_layer_dropout_rate = 0.8
+    hidden_layer_dropout_rate = 0.25
     output_layer_activation = 'sigmoid'  # None
     days_for_validation = 24
     days_for_test = 21
-    training_epochs = 10000
+    training_epochs = 10
     training_batch_size = 32
     verbose = 2
 
@@ -75,7 +74,7 @@ def get_model(dimensions):
     get_model_prelu(model, dimensions)
     model.add(Dense(1, kernel_initializer=HP.kernel_initializer, activation=HP.output_layer_activation))
     model.compile(loss=HP.loss, optimizer=HP.optimizer, metrics=HP.metrics)
-    print(model.summary())
+    model.summary()
     return model
 
 
@@ -88,15 +87,20 @@ def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Da
     return tr.iloc[:, 1:], tr.iloc[:, :1], v.iloc[:, 1:], v.iloc[:, :1], test.iloc[:, 1:], test.iloc[:, :1]
 
 
+def save(model):
+    print("saving model")
+    model.save("model", overwrite=True, include_optimizer=True, save_format='tf')
+
+
 def train():
     # Get the data
     train_x, train_y, validation_x, validation_y, test_x, test_y = get_data()
 
-    # Get the model
+    # Get the models
     model = get_model(train_x.shape[1])
 
-    # Train the model
-    print("fitting model")
+    # Train the models
+    print("fitting models")
     model.fit(train_x,
               train_y,
               validation_data=(validation_x, validation_y),
@@ -105,12 +109,14 @@ def train():
               verbose=2)
 
     print("predicting")
-    score = model.evaluate(test_x, test_y, verbose=HP.verbose)
+    print(model.evaluate(test_x, test_y, verbose=HP.verbose))
 
     for i in range(0, 100):
         tx = train_x.iloc[i]
         ty = train_y.iloc[i]
         print(f"{model.predict(np.array([tx]))[0][0] * 1e6}\t\t{1e6 * ty['_label']}")
+
+    save(model)
 
 
 train()

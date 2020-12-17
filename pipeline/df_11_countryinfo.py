@@ -1,6 +1,5 @@
 import pandas as pd
-import datasets
-import datasets_working_days
+from datasets import datasets, datasets_working_days
 
 
 def apply(df: pd.DataFrame) -> pd.DataFrame:

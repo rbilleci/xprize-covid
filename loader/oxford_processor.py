@@ -1,5 +1,5 @@
 import pandas as pd
-import datasets
+from datasets import datasets
 
 
 def filter_columns(df: pd.DataFrame) -> pd.DataFrame:
