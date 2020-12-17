@@ -20,14 +20,14 @@ class HP:
     optimizer = tf.keras.optimizers.Nadam()
     metrics = [tf.keras.metrics.RootMeanSquaredError()]
     loss = tf.keras.losses.MeanSquaredError()
-    hidden_layer_size = 200
-    hidden_layer_count = 2
+    hidden_layer_size = 200  # 200
+    hidden_layer_count = 2  #
     hidden_layer_dropout = False
     hidden_layer_dropout_rate = 0.25
-    output_layer_activation = 'sigmoid'  # None
-    days_for_validation = 24
-    days_for_test = 21
-    training_epochs = 10
+    output_layer_activation = 'sigmoid'  # sigmode
+    days_for_validation = 28  # 24
+    days_for_test = 14  # 21
+    training_epochs = 20
     training_batch_size = 32
     verbose = 2
 
