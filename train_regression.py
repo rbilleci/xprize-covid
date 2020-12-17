@@ -3,9 +3,10 @@
 from sklearn import tree
 from sklearn.metrics import r2_score
 
+import covid_constants
 from pipeline import df_pipeline
 
-train, validation, test = df_pipeline.process_for_training('OxCGRT_latest.csv', 24, 10)
+train, validation, test = df_pipeline.process_for_training(covid_constants.path_data_baseline, 24, 10)
 train = train.sample(frac=1).reset_index(drop=True)
 train_x = train.iloc[:, 1:]
 train_y = train.iloc[:, :1]
@@ -57,4 +58,3 @@ for i in range(0, 10):
     regr.fit(train_x, train_y.values.ravel())
     score = r2_score(validation_y, regr.predict(validation_x))
     print(score)
-   

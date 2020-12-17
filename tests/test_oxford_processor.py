@@ -1,6 +1,7 @@
 import os
 
 from loader import oxford_loader, oxford_processor
+import covid_constants
 import unittest
 
 
@@ -12,9 +13,9 @@ class TestOxfordProcessor(unittest.TestCase):
             os.chdir("../")
 
     def test_oxford_processor(self):
-        df = oxford_processor.process(oxford_loader.load('data/baseline_data.csv'))
+        df = oxford_processor.process(oxford_loader.load(covid_constants.path_data_baseline))
         df.info()
-        df = oxford_processor.process(oxford_loader.load('data/2020-09-30_historical_ip.csv'))
+        df = oxford_processor.process(oxford_loader.load(covid_constants.path_data_historical))
         df.info()
-        df = oxford_processor.process(oxford_loader.load('data/future_ip.csv'))
+        df = oxford_processor.process(oxford_loader.load(covid_constants.path_data_future))
         df.info()

@@ -1,18 +1,17 @@
-import datetime
 import logging as log
-import pandas as pd
-import predict_util
-import keras.models as km
-import datasets.datasets
 
+import keras.models as km
+import pandas as pd
+import covid_constants
+
+import predict_util
 from loader import oxford_processor, oxford_loader
 from pipeline import df_pipeline
-import predict_util
 
 
-def load_baseline_data() -> pd.DataFrame:
+def load_data_baseline() -> pd.DataFrame:
     log.info('START loading baseline data')
-    df_baseline = df_pipeline.process_for_prediction('data/baseline_data.csv')
+    df_baseline = df_pipeline.process_for_prediction(covid_constants.path_data_baseline)
     log.info('END   loading baseline data')
     return df_baseline
 
@@ -28,7 +27,7 @@ def load_future_data(path_future_data) -> pd.DataFrame:
 def prepare_df_output(start_date, end_date) -> pd.DataFrame:
     log.info('START prepare_df_output')
     # Get the country and region data
-    df_cr = pd.read_csv('data/reference_countries_and_regions.csv')
+    df_cr = pd.read_csv(covid_constants.reference_countries_and_regions)
     df_cr['RegionName'].fillna('', inplace=True)
 
     # Generate an array with dates for each country/region

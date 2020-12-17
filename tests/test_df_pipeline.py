@@ -3,6 +3,7 @@ import os
 from pipeline import df_pipeline
 import pandas as pd
 import unittest
+import covid_constants
 
 pd.options.display.max_columns = None
 pd.options.display.max_rows = None
@@ -16,13 +17,13 @@ class TestPipeline(unittest.TestCase):
             os.chdir("../")
 
     def test_oxford_data(self):
-        train, validation, test = df_pipeline.process_for_training('data/baseline_data.csv', 21, 21)
+        train, validation, test = df_pipeline.process_for_training(covid_constants.path_data_baseline, 21, 21)
         train.info()
 
     def test_historical_data(self):
-        df = df_pipeline.process_for_prediction('data/2020-09-30_historical_ip.csv')
+        df = df_pipeline.process_for_prediction(covid_constants.path_data_historical)
         df.info()
 
     def test_future_data(self):
-        df = df_pipeline.process_for_prediction('data/future_ip.csv')
+        df = df_pipeline.process_for_prediction(covid_constants.path_data_future)
         df.info()

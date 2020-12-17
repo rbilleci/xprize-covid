@@ -1,5 +1,6 @@
 import pandas as pd
 import pycountry_convert
+import covid_constants
 from workalendar.registry import registry
 from loader import oxford_loader
 from datetime import timedelta
@@ -14,11 +15,11 @@ def date_range(start_date, end_date, include_end_date):
         yield start_date + timedelta(n)
 
 
-df_countries = pd.read_csv('../data/reference_countries_and_regions.csv')
+df_countries = pd.read_csv(f"../{covid_constants.reference_countries_and_regions}")
 df_countries.fillna('', inplace=True)
 country_names = df_countries['CountryName'].unique().tolist()
 
-df = oxford_loader.load('../data/baseline_data.csv')
+df = oxford_loader.load(f"../{covid_constants.path_data_baseline}")
 unmappable_country_alpha3_codes = sorted(['RKS'])
 unmappable_country_alpha2_codes = sorted(['XX', 'TL'])
 country_name_to_continent = {}

@@ -10,6 +10,7 @@ from keras.layers.advanced_activations import PReLU
 import tensorflow as tf
 import numpy as np
 import pandas as pd
+import covid_constants
 
 from pipeline import df_pipeline
 
@@ -80,7 +81,9 @@ def get_model(dimensions):
 
 def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
     # train, validation, and test
-    tr, v, test = df_pipeline.process_for_training('OxCGRT_latest.csv', HP.days_for_validation, HP.days_for_test)
+    tr, v, test = df_pipeline.process_for_training(covid_constants.path_data_baseline,
+                                                   HP.days_for_validation,
+                                                   HP.days_for_test)
     tr = tr.sample(frac=1).reset_index(drop=True)
     v = v.sample(frac=1).reset_index(drop=True)
     test = test.sample(frac=1).reset_index(drop=True)
