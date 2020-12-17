@@ -10,71 +10,75 @@ from keras.layers.advanced_activations import PReLU
 import tensorflow as tf
 import numpy as np
 import pandas as pd
+from tensorflow.python.keras.callbacks import EarlyStopping
+
 import covid_constants
 
 from pipeline import df_pipeline
 
 
 class HP:
-    kernel_initializer = 'glorot_uniform'
-    optimizer = tf.keras.optimizers.Nadam()
-    metrics = [tf.keras.metrics.RootMeanSquaredError()]
-    loss = tf.keras.losses.MeanSquaredError()
-    hidden_layer_size = 200  # 200
-    hidden_layer_count = 2  #
-    hidden_layer_dropout = False
-    hidden_layer_dropout_rate = 0.25
-    output_layer_activation = 'sigmoid'  # sigmode
-    days_for_validation = 28  # 24
-    days_for_test = 14  # 21
-    training_epochs = 20
-    training_batch_size = 32
-    verbose = 2
+    KERNEL_INITIALIZER = 'glorot_uniform'
+    OPTIMIZER = tf.keras.optimizers.Nadam()
+    METRICS = [tf.keras.metrics.RootMeanSquaredError()]
+    LOSS = tf.keras.losses.MeanSquaredError()
+    LAYER_SIZE = 200  # 200
+    LAYERS = 2  #
+    LAYER_DROPOUT = False
+    LAYER_DROPOUT_RATE = 0.25
+    OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
+    DAYS_FOR_VALIDATION = 28  # 24
+    DAYS_FOR_TEST = 14  # 21
+    TRAINING_EPOCHS = 20
+    TRAINING_BATCH_SIZE = 32
+    VERBOSE = 2
+    EARLY_STOPPING_PATIENCE = 20
+    CALLBACKS = [EarlyStopping(patience=EARLY_STOPPING_PATIENCE, restore_best_weights=True)]
 
 
 def get_model_elu(model, dimensions) -> None:
     alpha = 0.1
-    for i in range(0, HP.hidden_layer_count):
+    for i in range(0, HP.LAYERS):
         if i == 0:
-            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
+            model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER, input_dim=dimensions))
         else:
-            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
+            model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER))
         model.add(ELU(alpha=alpha))
         # add dropout
-        if HP.hidden_layer_dropout:
-            model.add(Dropout(HP.hidden_layer_dropout_rate))
+        if HP.LAYER_DROPOUT:
+            model.add(Dropout(HP.LAYER_DROPOUT_RATE))
 
 
 def get_model_prelu(model, dimensions) -> None:
-    for i in range(0, HP.hidden_layer_count):
+    for i in range(0, HP.LAYERS):
         if i == 0:
-            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
+            model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER, input_dim=dimensions))
         else:
-            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
+            model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER))
         model.add(PReLU())
         # add dropout
-        if HP.hidden_layer_dropout:
-            model.add(Dropout(HP.hidden_layer_dropout_rate))
+        if HP.LAYER_DROPOUT:
+            model.add(Dropout(HP.LAYER_DROPOUT_RATE))
 
 
 def get_model_lrelu(model, dimensions) -> None:
     alpha = 0.1
-    for i in range(0, HP.hidden_layer_count):
+    for i in range(0, HP.LAYERS):
         if i == 0:
-            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer, input_dim=dimensions))
+            model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER, input_dim=dimensions))
         else:
-            model.add(Dense(HP.hidden_layer_size, kernel_initializer=HP.kernel_initializer))
+            model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER))
         model.add(LeakyReLU(alpha=alpha))
         # add dropout
-        if HP.hidden_layer_dropout:
-            model.add(Dropout(HP.hidden_layer_dropout_rate))
+        if HP.LAYER_DROPOUT:
+            model.add(Dropout(HP.LAYER_DROPOUT_RATE))
 
 
 def get_model(dimensions):
     model = Sequential()
     get_model_prelu(model, dimensions)
-    model.add(Dense(1, kernel_initializer=HP.kernel_initializer, activation=HP.output_layer_activation))
-    model.compile(loss=HP.loss, optimizer=HP.optimizer, metrics=HP.metrics)
+    model.add(Dense(1, kernel_initializer=HP.KERNEL_INITIALIZER, activation=HP.OUTPUT_ACTIVATION))
+    model.compile(loss=HP.LOSS, optimizer=HP.OPTIMIZER, metrics=HP.METRICS)
     model.summary()
     return model
 
@@ -82,8 +86,8 @@ def get_model(dimensions):
 def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
     # train, validation, and test
     tr, v, test = df_pipeline.process_for_training(covid_constants.PATH_DATA_BASELINE,
-                                                   HP.days_for_validation,
-                                                   HP.days_for_test)
+                                                   HP.DAYS_FOR_VALIDATION,
+                                                   HP.DAYS_FOR_TEST)
     tr = tr.sample(frac=1).reset_index(drop=True)
     v = v.sample(frac=1).reset_index(drop=True)
     test = test.sample(frac=1).reset_index(drop=True)
@@ -98,21 +102,23 @@ def save(model):
 def train():
     # Get the data
     train_x, train_y, validation_x, validation_y, test_x, test_y = get_data()
-
-    # Get the models
+    # Train
     model = get_model(train_x.shape[1])
-
-    # Train the models
-    print("fitting models")
-    model.fit(train_x,
-              train_y,
-              validation_data=(validation_x, validation_y),
-              batch_size=HP.training_batch_size,
-              epochs=HP.training_epochs,
-              verbose=2)
-
-    print("predicting")
-    print(model.evaluate(test_x, test_y, verbose=HP.verbose))
+    history = model.fit(train_x,
+                        train_y,
+                        validation_data=(validation_x, validation_y),
+                        batch_size=HP.TRAINING_BATCH_SIZE,
+                        epochs=HP.TRAINING_EPOCHS,
+                        callbacks=HP.CALLBACKS,
+                        verbose=HP.VERBOSE)
+    # Print data
+    best_epoch = np.argmin(history.history['val_loss'])
+    loss_train = history.history['loss'][best_epoch]
+    loss_validation = history.history['val_loss'][best_epoch]
+    loss_test = model.evaluate(test_x, test_y)
+    print('loss, training:', loss_train)
+    print('loss, validation:', loss_validation)
+    print('loss, test:', loss_test)
 
     for i in range(0, 100):
         tx = train_x.iloc[i]
