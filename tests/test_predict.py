@@ -11,4 +11,5 @@ class TestPredict(unittest.TestCase):
             os.chdir("../")
 
     def test_predict(self):
-        predict.predict("2020-01-01", "2020-01-01", "data/future_ip.csv", "output_file")
+        # TODO: test with different date ranges to simulate unexpected problems
+        predict.predict("2020-12-30", "2021-07-10", "data/future_ip.csv", "output_file.log")

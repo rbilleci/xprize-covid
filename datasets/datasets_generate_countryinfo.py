@@ -14,11 +14,13 @@ def date_range(start_date, end_date, include_end_date):
         yield start_date + timedelta(n)
 
 
-df = oxford_loader.load('data/baseline_data.csv')
+df_countries = pd.read_csv('../data/reference_countries_and_regions.csv')
+df_countries.fillna('', inplace=True)
+country_names = df_countries['CountryName'].unique().tolist()
 
+df = oxford_loader.load('../data/baseline_data.csv')
 unmappable_country_alpha3_codes = sorted(['RKS'])
 unmappable_country_alpha2_codes = sorted(['XX', 'TL'])
-country_names = {}
 country_name_to_continent = {}
 country_name_to_alpha2_code = {}
 country_name_to_alpha3_code = {}
@@ -26,19 +28,19 @@ region_name_to_region_code = {}
 
 for index, row in df.iterrows():
     country_name = row['CountryName']
-    country_names[country_name] = None
-    country_alpha3_code = row['CountryCode']
-    country_alpha2_code = 'XX' if country_alpha3_code in unmappable_country_alpha3_codes \
-        else pycountry_convert.country_alpha3_to_country_alpha2(country_alpha3_code)
-    continent_code = 'UNKNOWN' if country_alpha2_code in unmappable_country_alpha2_codes \
-        else pycountry_convert.country_alpha2_to_continent_code(country_alpha2_code)
-    region_name = None if pd.isnull(row['RegionName']) else row['RegionName']
-    region_code = None if pd.isnull(row['RegionCode']) else row['RegionCode']
-    country_name_to_continent[country_name] = continent_code
-    country_name_to_alpha2_code[country_name] = country_alpha2_code
-    country_name_to_alpha3_code[country_name] = country_alpha3_code
-    if region_name is not None:
-        region_name_to_region_code[region_name] = region_code
+    if country_name in country_names:
+        country_alpha3_code = row['CountryCode']
+        country_alpha2_code = 'XX' if country_alpha3_code in unmappable_country_alpha3_codes \
+            else pycountry_convert.country_alpha3_to_country_alpha2(country_alpha3_code)
+        continent_code = 'UNKNOWN' if country_alpha2_code in unmappable_country_alpha2_codes \
+            else pycountry_convert.country_alpha2_to_continent_code(country_alpha2_code)
+        region_name = None if pd.isnull(row['RegionName']) else row['RegionName']
+        region_code = None if pd.isnull(row['RegionCode']) else row['RegionCode']
+        country_name_to_continent[country_name] = continent_code
+        country_name_to_alpha2_code[country_name] = country_alpha2_code
+        country_name_to_alpha3_code[country_name] = country_alpha3_code
+        if region_name is not None:
+            region_name_to_region_code[region_name] = region_code
 
 # generate working day information for each country
 default_calendar = registry.get('US')()
@@ -47,7 +49,7 @@ end_date = datetime.date(2021, 12, 31)  # TODO: factor out end date across all c
 
 non_working_dates = {}
 
-for country_name in country_names.keys():
+for country_name in country_names:
     working_registry = registry.get(country_name_to_alpha2_code[country_name])
     working_calendar = default_calendar if working_registry is None else working_registry()
 
@@ -58,9 +60,10 @@ for country_name in country_names.keys():
         if not working_calendar.is_working_day(day):
             non_working_dates[country_name][day.toordinal()] = 1
 
-print(non_working_dates)
 # print out all the data
+print(non_working_dates)
 print(country_name_to_alpha2_code)
 print(country_name_to_alpha3_code)
 print(region_name_to_region_code)
 print(country_name_to_continent)
+print(country_names)
