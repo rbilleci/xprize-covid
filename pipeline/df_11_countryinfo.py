@@ -1,25 +1,26 @@
 import pandas as pd
 from datasets import datasets, datasets_working_days
+from oxford_constants import *
 
 
 def apply(df: pd.DataFrame) -> pd.DataFrame:
-    df['continent_code'] = df['country_name'].apply(lambda x: datasets.country_name_to_continent[x])
-    df['is_working_day_today'] = df[['country_name', 'date']].apply(is_working_day_today, axis=1)
-    df['is_working_day_tomorrow'] = df[['country_name', 'date']].apply(is_working_day_tomorrow, axis=1)
-    df['is_working_day_yesterday'] = df[['country_name', 'date']].apply(is_working_day_yesterday, axis=1)
+    df[CONTINENT] = df[COUNTRY_NAME].apply(lambda x: datasets.country_name_to_continent[x])
+    df[IS_WORKING_DAY_TODAY] = df[[COUNTRY_NAME, DATE]].apply(is_working_day_today, axis=1)
+    df[IS_WORKING_DAY_TOMORROW] = df[[COUNTRY_NAME, DATE]].apply(is_working_day_tomorrow, axis=1)
+    df[IS_WORKING_DAY_YESTERDAY] = df[[COUNTRY_NAME, DATE]].apply(is_working_day_yesterday, axis=1)
     return df
 
 
 def is_working_day_today(x):
-    return is_working_day(x['country_name'], x['date'].toordinal())
+    return is_working_day(x[COUNTRY_NAME], x[DATE].toordinal())
 
 
 def is_working_day_tomorrow(x):
-    return is_working_day(x['country_name'], x['date'].toordinal() + 1)
+    return is_working_day(x[COUNTRY_NAME], x[DATE].toordinal() + 1)
 
 
 def is_working_day_yesterday(x):
-    return is_working_day(x['country_name'], x['date'].toordinal() - 1)
+    return is_working_day(x[COUNTRY_NAME], x[DATE].toordinal() - 1)
 
 
 def is_working_day(country_name: str, date_as_ordinal: int):

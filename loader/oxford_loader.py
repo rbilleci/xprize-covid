@@ -1,5 +1,6 @@
 import pandas as pd
 import datetime
+from oxford_constants import *
 
 
 def date_parser(value: str) -> datetime.date:
@@ -14,9 +15,9 @@ def load(fn: str) -> pd.DataFrame:
                  "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>", "N/A",
                  "NULL", "NaN", "n/a", "nan", "null"]
     return pd.read_csv(fn,
-                       parse_dates=['Date'],
+                       parse_dates=[DATE],
                        date_parser=date_parser,
-                       dtype={"RegionCode": str, "RegionName": str},
+                       dtype={REGION_CODE: str, REGION_NAME: str},
                        na_values=na_values,
                        keep_default_na=False,
                        error_bad_lines=False)

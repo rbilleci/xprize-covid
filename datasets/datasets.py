@@ -1,26 +1,10 @@
-allowed_columns_on_import = sorted(["c1",
-                                    "c2",
-                                    "c3",
-                                    "c4",
-                                    "c5",
-                                    "c6",
-                                    "c7",
-                                    "c8",
-                                    "cases",
-                                    "country_name",
-                                    "deaths",
-                                    "date",
-                                    "h1",
-                                    "h2",
-                                    "h3",
-                                    "h6",
-                                    "region_name"])
+
 
 # From Oliver: I confirm there are only 181 in that list. Oxford has added Tonga and Malta since then,
 # but we will not include them. There are 83 regions for Brazil, United Kingdom and United States.
 # Since then Oxford has added regions for Canada but we will not include them.
 # That's 264 unique Country / Regions combinations
-allowed_countries = sorted(
+ALLOWED_COUNTRIES = sorted(
     ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Aruba', 'Australia', 'Austria',
      'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bermuda',
      'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso',

@@ -1,21 +1,22 @@
 import pandas as pd
 import datetime
+from oxford_constants import *
 
-scales = {'c1': 3.0,
-          'c2': 3.0,
-          'c3': 2.0,
-          'c4': 4.0,
-          'c5': 2.0,
-          'c6': 3.0,
-          'c7': 2.0,
-          'c8': 4.0,
-          'h1': 2.0,
-          'h2': 3.0,
-          'h3': 2.0,
-          'h6': 4.0,
-          'cases': 1e9,  # 1 billion
-          'deaths': 1e8,  # 100 million
-          '_label': 1e6
+scales = {C1: 3.0,
+          C2: 3.0,
+          C3: 2.0,
+          C4: 4.0,
+          C5: 2.0,
+          C6: 3.0,
+          C7: 2.0,
+          C8: 4.0,
+          H1: 2.0,
+          H2: 3.0,
+          H3: 2.0,
+          H6: 4.0,
+          CASES: 1e9,  # 1 billion
+          DEATHS: 1e8,  # 100 million
+          LABEL: 1e6
           }
 
 date_ordinal_min = datetime.date(2020, 1, 1).toordinal()
@@ -28,10 +29,11 @@ def apply(df: pd.DataFrame) -> pd.DataFrame:
         name, series = e[0], e[1]
         if name in scales.keys():
             df[name] = df[name].apply(lambda x: scale_value(x, 0, scales.get(name)))
-        if name.endswith('_sin') or name.endswith('_cos'):
+        # TODO: cleanup
+        if name.endswith('_sin') or name.endswith('_cos') or name.endswith('_SIN') or name.endswith('_COS'):
             df[name] = df[name].apply(lambda x: scale_value(x, -1.0, 1.0))
     # Scale the date
-    df['date'] = df['date'].apply(lambda x: scale_value(x.toordinal(), date_ordinal_min, date_ordinal_max))
+    df[DATE] = df[DATE].apply(lambda x: scale_value(x.toordinal(), date_ordinal_min, date_ordinal_max))
     return df
 
 

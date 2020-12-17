@@ -1,6 +1,6 @@
 import os
 import unittest
-import covid_constants
+import datasets_constants
 import predict as predict
 
 
@@ -25,5 +25,5 @@ class TestPredict(unittest.TestCase):
 
     @staticmethod
     def predict_for_range(start_date, end_date):
-        predict.predict(start_date, end_date, covid_constants.PATH_DATA_FUTURE,
+        predict.predict(start_date, end_date, datasets_constants.PATH_DATA_FUTURE,
                         f"tests/data_test_predictions_{start_date}_{end_date}.log")

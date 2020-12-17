@@ -1,13 +1,14 @@
 import pandas as pd
 import numpy as np
 from datasets import datasets
+from oxford_constants import *
 
 
 def apply(df: pd.DataFrame) -> pd.DataFrame:
-    df = ohe(df, 'country_name', datasets.allowed_countries)
-    df = ohe(df, 'region_name', datasets.region_name_to_region_code.keys())
-    df = ohe(df, 'continent_code', datasets.country_name_to_continent.values())
-    df = ohe(df, 'day_of_week', range(0, 7))
+    df = ohe(df, COUNTRY_NAME, datasets.ALLOWED_COUNTRIES)
+    df = ohe(df, REGION_NAME, datasets.region_name_to_region_code.keys())
+    df = ohe(df, CONTINENT, datasets.country_name_to_continent.values())
+    df = ohe(df, DAY_OF_WEEK, range(0, 7))
     return df
 
 

@@ -1,6 +1,6 @@
 import os
 import unittest
-import covid_constants
+import datasets_constants
 from loader import oxford_loader, oxford_processor
 from pipeline import df_00_splitter
 
@@ -12,5 +12,5 @@ class TestSplitter(unittest.TestCase):
             os.chdir("../")
 
     def test_splitter(self):
-        df = oxford_processor.process(oxford_loader.load(covid_constants.PATH_DATA_BASELINE))
+        df = oxford_processor.process(oxford_loader.load(datasets_constants.PATH_DATA_BASELINE))
         sx, sy, sz = df_00_splitter.split(df, 21, 21)

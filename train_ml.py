@@ -9,14 +9,15 @@ import numpy as np
 import pandas as pd
 from tensorflow.python.keras.callbacks import EarlyStopping
 
-import covid_constants
+import datasets_constants
 
 from pipeline import df_pipeline
+from oxford_constants import *
 
 
 class HP:
     KERNEL_INITIALIZER = 'glorot_uniform'
-    OPTIMIZER = tf.keras.optimizers.Nadam()
+    OPTIMIZER = tf.keras.optimizers.Adam()
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()
     LAYER_SIZE = 200  # 200
@@ -82,7 +83,7 @@ def get_model(dimensions):
 
 def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
     # train, validation, and test
-    tr, v, test = df_pipeline.process_for_training(covid_constants.PATH_DATA_BASELINE,
+    tr, v, test = df_pipeline.process_for_training(datasets_constants.PATH_DATA_BASELINE,
                                                    HP.DAYS_FOR_VALIDATION,
                                                    HP.DAYS_FOR_TEST)
     tr = tr.sample(frac=1).reset_index(drop=True)
@@ -120,7 +121,7 @@ def train():
     for i in range(0, 100):
         tx = train_x.iloc[i]
         ty = train_y.iloc[i]
-        print(f"{model.predict(np.array([tx]))[0][0] * 1e6}\t\t{1e6 * ty['_label']}")
+        print(f"{model.predict(np.array([tx]))[0][0] * 1e6}\t\t{1e6 * ty[LABEL]}")
 
     save(model)
 

@@ -6,6 +6,3 @@ PATH_DATA = 'data'
 
 # For reference data
 REFERENCE_COUNTRIES_AND_REGIONS = 'data/reference_countries_and_regions.csv'
-
-# For window
-WINDOW_LOOKBACK_DAYS = 60

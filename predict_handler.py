@@ -25,7 +25,7 @@ def predict(start_date_str: str,
     log.info(f"parsed end date as: {end_date}")
 
     # get the baseline data we'll predict from
-    df_baseline = predict_io.load_data_baseline()
+    df_window = predict_io.prepare_df_window(start_date, end_date)
     df_future = predict_io.load_future_data(path_future_data)
     model = predict_io.load_model()
     df_output = predict_io.prepare_df_output(start_date, end_date)

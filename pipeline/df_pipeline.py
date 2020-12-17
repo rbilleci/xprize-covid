@@ -1,5 +1,7 @@
 import pandas as pd
+
 from loader import oxford_loader, oxford_processor
+from oxford_constants import *
 from pipeline import df_00_splitter, df_10_data_timeinfo, df_11_countryinfo, df_50_mark_nulls, df_60_imputer, \
     df_70_label, df_80_scaler, df_90_ohe
 
@@ -36,7 +38,7 @@ def process_df(df, label: bool = False) -> pd.DataFrame:
 
     # As a file step, move label to first column
     if label:
-        label = df['_label']
-        df.drop(labels=['_label'], axis=1, inplace=True)
-        df.insert(0, '_label', label)
+        label = df[LABEL]
+        df.drop(labels=[LABEL], axis=1, inplace=True)
+        df.insert(0, LABEL, label)
     return df
