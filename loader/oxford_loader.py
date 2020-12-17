@@ -13,7 +13,7 @@ def load(fn: str) -> pd.DataFrame:
     na_values = ["", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN",
                  "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>", "N/A",
                  "NULL", "NaN", "n/a", "nan", "null"]
-    return pd.read_csv(f"data/{fn}",
+    return pd.read_csv(fn,
                        parse_dates=['Date'],
                        date_parser=date_parser,
                        dtype={"RegionCode": str, "RegionName": str},

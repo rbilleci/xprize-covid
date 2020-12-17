@@ -14,7 +14,7 @@ def date_range(start_date, end_date, include_end_date):
         yield start_date + timedelta(n)
 
 
-df = oxford_loader.load('OxCGRT_latest.csv')
+df = oxford_loader.load('data/baseline_data.csv')
 
 unmappable_country_alpha3_codes = sorted(['RKS'])
 unmappable_country_alpha2_codes = sorted(['XX', 'TL'])

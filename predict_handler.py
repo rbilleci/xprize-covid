@@ -9,22 +9,19 @@ log.basicConfig(filename='predict.log', level=log.INFO, format='%(asctime)s\t%(l
 
 def predict(start_date_str: str,
             end_date_str: str,
-            fn_in: str,
-            fn_out: str) -> None:
+            path_future_data: str,
+            path_output_file: str) -> None:
     # Perform sanity checks
-    log.info(f"predict for {start_date_str} to {end_date_str} with file {fn_in} and output file {fn_out}")
+    log.info(f"predicting {start_date_str} - {end_date_str} for '{path_future_data}' with output '{path_output_file}'")
     start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
     end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
     log.info(f"parsed start date as: {start_date}")
     log.info(f"parsed end date as: {end_date}")
-    log.info(f"reading input file {fn_in}")
 
     # get the baseline data we'll predict from
-    df_baseline = df_pipeline.process_for_prediction('baseline_data.csv')
-    df_baseline.info()
-
-    # get the model
-    model = resolve_model()
+    df_baseline = load_baseline_data()
+    df_future = load_future_data(path_future_data)
+    model = load_model()
 
     # run the predictions through each date
     for prediction_date in predict_util.date_range(start_date, end_date, True):
@@ -33,13 +30,32 @@ def predict(start_date_str: str,
 
 
 def predict_day(prediction_date):
-    log.info(f"evaluating predictions for date: {prediction_date}")
+    log.info(f"START prediction {prediction_date}")
+    log.info(f"END   prediction {prediction_date}")
 
 
-def resolve_model():
+def load_baseline_data():
+    log.info('START loading baseline data')
+    df_baseline = df_pipeline.process_for_prediction('data/baseline_data.csv')
+    log.info('END   loading baseline data')
+    df_baseline.info()
+    return df_baseline
+
+
+def load_future_data(path_future_data):
+    log.info('START loading baseline data')
+    df_baseline = df_pipeline.process_for_prediction(path_future_data)
+    log.info('END   loading baseline data')
+    df_baseline.info()
+    return df_baseline
+
+
+def load_model():
     try:
+        log.info('START loading model')
         model = km.load_model('model', compile=True)
         model.summary()
+        log.info('END   loading model')
         return model
     except OSError:
         log.warning("unable to load model from path 'model', attempting to load from path 'work/model'")

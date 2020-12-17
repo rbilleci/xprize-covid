@@ -11,4 +11,4 @@ class TestPredict(unittest.TestCase):
             os.chdir("../")
 
     def test_predict(self):
-        predict.predict("2020-01-01", "2020-01-01", "input_file", "output_file")
+        predict.predict("2020-01-01", "2020-01-01", "data/future_ip.csv", "output_file")
