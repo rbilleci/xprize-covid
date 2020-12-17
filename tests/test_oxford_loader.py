@@ -12,9 +12,9 @@ class TestOxfordLoader(unittest.TestCase):
             os.chdir("../")
 
     def test_loader(self):
-        df = oxford_loader.load(covid_constants.path_data_baseline)
+        df = oxford_loader.load(covid_constants.PATH_DATA_BASELINE)
         df.info()
-        df = oxford_loader.load(covid_constants.path_data_historical)
+        df = oxford_loader.load(covid_constants.PATH_DATA_HISTORICAL)
         df.info()
-        df = oxford_loader.load(covid_constants.path_data_future)
+        df = oxford_loader.load(covid_constants.PATH_DATA_FUTURE)
         df.info()

@@ -13,9 +13,9 @@ class TestOxfordProcessor(unittest.TestCase):
             os.chdir("../")
 
     def test_oxford_processor(self):
-        df = oxford_processor.process(oxford_loader.load(covid_constants.path_data_baseline))
+        df = oxford_processor.process(oxford_loader.load(covid_constants.PATH_DATA_BASELINE))
         df.info()
-        df = oxford_processor.process(oxford_loader.load(covid_constants.path_data_historical))
+        df = oxford_processor.process(oxford_loader.load(covid_constants.PATH_DATA_HISTORICAL))
         df.info()
-        df = oxford_processor.process(oxford_loader.load(covid_constants.path_data_future))
+        df = oxford_processor.process(oxford_loader.load(covid_constants.PATH_DATA_FUTURE))
         df.info()

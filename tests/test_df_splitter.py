@@ -12,5 +12,5 @@ class TestSplitter(unittest.TestCase):
             os.chdir("../")
 
     def test_splitter(self):
-        df = oxford_processor.process(oxford_loader.load(covid_constants.path_data_baseline))
+        df = oxford_processor.process(oxford_loader.load(covid_constants.PATH_DATA_BASELINE))
         sx, sy, sz = df_00_splitter.split(df, 21, 21)

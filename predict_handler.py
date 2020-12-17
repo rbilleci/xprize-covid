@@ -39,6 +39,10 @@ def predict(start_date_str: str,
     return None
 
 
-def predict_day(prediction_date):
+def predict_day(prediction_date) -> None:
     log.info(f"START prediction {prediction_date}")
     log.info(f"END   prediction {prediction_date}")
+
+
+def predict_country(prediction_date, country_name, region_name) -> None:
+    return None

@@ -15,11 +15,12 @@ def date_range(start_date, end_date, include_end_date):
         yield start_date + timedelta(n)
 
 
-df_countries = pd.read_csv(f"../{covid_constants.reference_countries_and_regions}")
+df_countries = pd.read_csv(f"../{covid_constants.REFERENCE_COUNTRIES_AND_REGIONS}")
 df_countries.fillna('', inplace=True)
 country_names = df_countries['CountryName'].unique().tolist()
+print(len(country_names))
 
-df = oxford_loader.load(f"../{covid_constants.path_data_baseline}")
+df = oxford_loader.load(f"../{covid_constants.PATH_DATA_BASELINE}")
 unmappable_country_alpha3_codes = sorted(['RKS'])
 unmappable_country_alpha2_codes = sorted(['XX', 'TL'])
 country_name_to_continent = {}
@@ -68,3 +69,4 @@ print(country_name_to_alpha3_code)
 print(region_name_to_region_code)
 print(country_name_to_continent)
 print(country_names)
+print(len(country_names))

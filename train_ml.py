@@ -81,7 +81,7 @@ def get_model(dimensions):
 
 def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
     # train, validation, and test
-    tr, v, test = df_pipeline.process_for_training(covid_constants.path_data_baseline,
+    tr, v, test = df_pipeline.process_for_training(covid_constants.PATH_DATA_BASELINE,
                                                    HP.days_for_validation,
                                                    HP.days_for_test)
     tr = tr.sample(frac=1).reset_index(drop=True)
