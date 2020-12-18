@@ -12,4 +12,5 @@ REFERENCE_COUNTRIES_AND_REGIONS = 'data/reference_countries_and_regions.csv'
 
 DATE_LOWER_BOUND = datetime.date(2020, 1, 1)
 DATE_UPPER_BOUND = datetime.date(2021, 12, 31)
-
+DATE_ORDINAL_LOWER_BOUND = DATE_LOWER_BOUND.toordinal()
+DATE_ORDINAL_UPPER_BOUND = DATE_UPPER_BOUND.toordinal()

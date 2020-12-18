@@ -10,7 +10,7 @@ import pandas as pd
 from tensorflow.python.keras.callbacks import EarlyStopping
 
 import datasets_constants
-from oxford_constants import LABEL, CASES, PREDICTED_NEW_CASES
+from oxford_constants import LABEL, CONFIRMED_CASES, PREDICTED_NEW_CASES, PREDICTED_NEW_DEATHS, CONFIRMED_DEATHS
 
 from pipeline import df_pipeline
 
@@ -102,14 +102,6 @@ def train(column_to_predict: str, model_name: str):
     # Get the data
     train_x, train_y, validation_x, validation_y, test_x, test_y = get_data(column_to_predict)
 
-    pd.options.display.max_columns = 4
-    pd.options.display.max_rows = 100
-    pd.options.display.max_info_columns = 1000
-    train_x.info()
-    print(train_x.sample(10))
-    train_y.info()
-    print(train_y.sample(10))
-
     # Train
     model = get_model(train_x.shape[1])
     history = model.fit(train_x,
@@ -137,4 +129,10 @@ def train(column_to_predict: str, model_name: str):
 
 
 # Train to get the model for confirmed cases
-train(CASES, PREDICTED_NEW_CASES)
+
+pd.options.display.max_columns = 4
+pd.options.display.max_rows = 1000
+pd.options.display.max_info_columns = 1000
+
+train(CONFIRMED_DEATHS, PREDICTED_NEW_DEATHS)
+train(CONFIRMED_CASES, PREDICTED_NEW_CASES)

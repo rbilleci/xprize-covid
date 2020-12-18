@@ -1,7 +1,7 @@
 import pandas as pd
-import datetime
-from oxford_constants import C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6, CASES, DEATHS, DATE, PREDICTED_NEW_CASES, \
-    LABEL
+
+from datasets_constants import DATE_ORDINAL_UPPER_BOUND, DATE_ORDINAL_LOWER_BOUND
+from oxford_constants import C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6, CONFIRMED_CASES, CONFIRMED_DEATHS, DATE, LABEL
 
 scales = {C1: 3.0,
           C2: 3.0,
@@ -15,13 +15,10 @@ scales = {C1: 3.0,
           H2: 3.0,
           H3: 2.0,
           H6: 4.0,
-          CASES: 1e9,  # 1 billion
-          DEATHS: 1e8,  # 100 million
+          CONFIRMED_CASES: 1e9,  # 1 billion
+          CONFIRMED_DEATHS: 1e8,  # 100 million
           LABEL: 1e6
           }
-
-date_ordinal_min = datetime.date(2020, 1, 1).toordinal()
-date_ordinal_max = datetime.date(2021, 12, 31).toordinal()
 
 
 def apply(df: pd.DataFrame) -> pd.DataFrame:
@@ -34,7 +31,7 @@ def apply(df: pd.DataFrame) -> pd.DataFrame:
         if name.endswith('_sin') or name.endswith('_cos') or name.endswith('_SIN') or name.endswith('_COS'):
             df[name] = df[name].apply(lambda x: scale_value(x, -1.0, 1.0))
     # Scale the date
-    df[DATE] = df[DATE].apply(lambda x: scale_value(x.toordinal(), date_ordinal_min, date_ordinal_max))
+    df[DATE] = df[DATE].apply(lambda x: scale_value(x.toordinal(), DATE_ORDINAL_LOWER_BOUND, DATE_ORDINAL_UPPER_BOUND))
     return df
 
 

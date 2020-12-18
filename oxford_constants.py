@@ -13,8 +13,8 @@ C5 = "C5_Close public transport"
 C6 = "C6_Stay at home requirements"
 C7 = "C7_Restrictions on internal movement"
 C8 = "C8_International travel controls"
-CASES = "ConfirmedCases"
-DEATHS = "ConfirmedDeaths"
+CONFIRMED_CASES = "ConfirmedCases"
+CONFIRMED_DEATHS = "ConfirmedDeaths"
 H1 = "H1_Public information campaigns"
 H2 = "H2_Testing policy"
 H3 = "H3_Contact tracing"
@@ -57,9 +57,9 @@ COLUMNS_ALLOWED_ON_READ = sorted([C1,
                                   C6,
                                   C7,
                                   C8,
-                                  CASES,
+                                  CONFIRMED_CASES,
                                   COUNTRY_NAME,
-                                  DEATHS,
+                                  CONFIRMED_DEATHS,
                                   DATE,
                                   H1,
                                   H2,

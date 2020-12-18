@@ -5,7 +5,8 @@ import pandas as pd
 import oxford_loader
 from datasets_constants import PATH_DATA_BASELINE, REFERENCE_COUNTRIES_AND_REGIONS, DATE_LOWER_BOUND
 from oxford_constants import COUNTRY_NAME, REGION_NAME, DATE, NPI_COLUMNS, C1, C2, C3, C4, C5, C6, C7, C8, H1, \
-    H2, H3, H6, INDEX_COLUMNS, GEO_ID, IS_SPECIALTY, LABEL, PREDICTED_NEW_CASES
+    H2, H3, H6, INDEX_COLUMNS, GEO_ID, IS_SPECIALTY, LABEL, PREDICTED_NEW_CASES, PREDICTED_NEW_DEATHS, CONFIRMED_DEATHS, \
+    CONFIRMED_CASES
 from pipeline import df_00_splitter, df_10_data_timeinfo, df_11_countryinfo, df_60_imputer, df_70_label, df_80_scaler, \
     df_90_ohe
 
@@ -27,10 +28,14 @@ def pipeline_for_training(df: pd.DataFrame, column_to_predict: str) -> pd.DataFr
     df = df_11_countryinfo.apply(df)
     df = df_60_imputer.apply(df)
     df = df_70_label.apply(df, column_to_predict)  # apply label before scaling, so that it is not scaled twice
+
+    print(df[[LABEL, CONFIRMED_DEATHS, DATE, COUNTRY_NAME]].tail(1000))
+    #print(df[[LABEL, CONFIRMED_CASES, DATE, COUNTRY_NAME]].tail(1000))
+
     df = df_80_scaler.apply(df)
     df = df_90_ohe.apply(df)
 
-    # Add the label
+    # Move Label to Front
     df_label = df[LABEL]
     df = df.drop(labels=[LABEL], axis=1)
     df.insert(0, LABEL, df_label)
@@ -74,6 +79,7 @@ def get_dataset_for_prediction(start_date: date,
     """ Add specialty columns """
     df[PREDICTED_NEW_CASES] = 0.0
     df[IS_SPECIALTY] = 0
+    df[PREDICTED_NEW_DEATHS] = 0.0
 
     return df
 
