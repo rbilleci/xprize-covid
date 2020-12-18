@@ -10,7 +10,7 @@ from keras.models import Sequential
 from tensorflow.python.keras.callbacks import EarlyStopping
 
 import datasets_constants
-from oxford_constants import LABEL, CONFIRMED_CASES, PREDICTED_NEW_CASES, COUNTRY_NAME, DATE
+from oxford_constants import LABEL, PREDICTED_NEW_CASES
 from pipeline import df_pipeline
 
 
@@ -80,12 +80,11 @@ def get_model(dimensions):
     return model
 
 
-def get_data(column_to_predict: str) -> (
+def get_data() -> (
         pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
     tr, val, test = df_pipeline.get_datasets_for_training(datasets_constants.PATH_DATA_BASELINE,
                                                           HP.DAYS_FOR_VALIDATION,
-                                                          HP.DAYS_FOR_TEST,
-                                                          column_to_predict)
+                                                          HP.DAYS_FOR_TEST)
 
     tr = tr.sample(frac=1).reset_index(drop=True)
     val = val.sample(frac=1).reset_index(drop=True)
@@ -93,14 +92,14 @@ def get_data(column_to_predict: str) -> (
     return tr.iloc[:, 1:], tr.iloc[:, :1], val.iloc[:, 1:], val.iloc[:, :1], test.iloc[:, 1:], test.iloc[:, :1]
 
 
-def save(model, column_to_predict: str):
+def save(model, model_name: str):
     print("saving model")
-    model.save(f"models/{column_to_predict}", overwrite=True, include_optimizer=True, save_format='tf')
+    model.save(f"models/{model_name}", overwrite=True, include_optimizer=True, save_format='tf')
 
 
-def train(column_to_predict: str, model_name: str):
+def train(model_name: str):
     # Get the data
-    train_x, train_y, validation_x, validation_y, test_x, test_y = get_data(column_to_predict)
+    train_x, train_y, validation_x, validation_y, test_x, test_y = get_data()
 
     # Train
     model = get_model(train_x.shape[1])
@@ -135,4 +134,4 @@ pd.options.display.max_columns = 4
 pd.options.display.max_rows = 1000
 pd.options.display.max_info_columns = 1000
 
-train(CONFIRMED_CASES, PREDICTED_NEW_CASES)
+train(PREDICTED_NEW_CASES)

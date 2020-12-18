@@ -13,10 +13,11 @@ from pipeline import df_00_splitter, df_10_data_timeinfo, df_11_countryinfo, df_
 
 def get_datasets_for_training(fn: str,
                               days_for_validation: int,
-                              days_for_test: int,
-                              column_to_predict: str) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
+                              days_for_test: int) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     df = oxford_loader.load(fn)
-    df = apply_pipeline_preprocessing(df, column_to_predict)
+    df = apply_pipeline_preprocessing(df)
+    # Add the label, computing the value
+    df = df_70_label.apply(df)
     # the last day will have no label, so we strip it out
     # do this after computing the label and before the split
     df = apply_last_days_stripping(df)
@@ -34,6 +35,8 @@ def get_dataset_for_prediction(start_date: date,
     """ Get the baseline data, determine the max date, and set the initial window to be used """
     df = oxford_loader.load(PATH_DATA_BASELINE, load_for_prediction=True)
     df = apply_pipeline_preprocessing(df)
+    # Add the label
+    df[PREDICTED_NEW_CASES] = 0.0
     df = df.set_index(INDEX_COLUMNS, drop=True)
 
     """ Fill in the data frame with missing rows for all past dates and future dates """
@@ -72,7 +75,7 @@ def apply_last_days_stripping(df: pd.DataFrame) -> pd.DataFrame:
     return df.loc[(df[DATE] <= date_max)]
 
 
-def apply_pipeline_preprocessing(df: pd.DataFrame, column_to_predict: str) -> pd.DataFrame:
+def apply_pipeline_preprocessing(df: pd.DataFrame) -> pd.DataFrame:
     # Add null marker
     for e in df.items():
         name, series = e[0], e[1]
@@ -80,8 +83,6 @@ def apply_pipeline_preprocessing(df: pd.DataFrame, column_to_predict: str) -> pd
             df[f"{name}_N"] = series.apply(lambda x: (1.0 if pd.isnull(x) else 0.0))
     # Impute missing values
     df = df_60_imputer.apply(df)
-    # add the label
-    df = df_70_label.apply(df, column_to_predict)
     return df
 
 
