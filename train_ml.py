@@ -10,13 +10,13 @@ from keras.models import Sequential
 from tensorflow.python.keras.callbacks import EarlyStopping
 
 import datasets_constants
-from oxford_constants import LABEL, CONFIRMED_CASES, PREDICTED_NEW_CASES
+from oxford_constants import LABEL, CONFIRMED_CASES, PREDICTED_NEW_CASES, COUNTRY_NAME, DATE
 from pipeline import df_pipeline
 
 
 class HP:
     KERNEL_INITIALIZER = 'glorot_uniform'
-    OPTIMIZER = tf.keras.optimizers.Adam()
+    OPTIMIZER = tf.keras.optimizers.Nadam()
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()
     LAYER_SIZE = 200  # 200
@@ -26,7 +26,7 @@ class HP:
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
     DAYS_FOR_VALIDATION = 31  # 31
     DAYS_FOR_TEST = 14  # 14
-    TRAINING_EPOCHS = 10
+    TRAINING_EPOCHS = 1000
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
     EARLY_STOPPING_PATIENCE = 100
@@ -82,14 +82,15 @@ def get_model(dimensions):
 
 def get_data(column_to_predict: str) -> (
         pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
-    tr, v, test = df_pipeline.get_datasets_for_training(datasets_constants.PATH_DATA_BASELINE,
-                                                        HP.DAYS_FOR_VALIDATION,
-                                                        HP.DAYS_FOR_TEST,
-                                                        column_to_predict)
+    tr, val, test = df_pipeline.get_datasets_for_training(datasets_constants.PATH_DATA_BASELINE,
+                                                          HP.DAYS_FOR_VALIDATION,
+                                                          HP.DAYS_FOR_TEST,
+                                                          column_to_predict)
+
     tr = tr.sample(frac=1).reset_index(drop=True)
-    v = v.sample(frac=1).reset_index(drop=True)
+    val = val.sample(frac=1).reset_index(drop=True)
     test = test.sample(frac=1).reset_index(drop=True)
-    return tr.iloc[:, 1:], tr.iloc[:, :1], v.iloc[:, 1:], v.iloc[:, :1], test.iloc[:, 1:], test.iloc[:, :1]
+    return tr.iloc[:, 1:], tr.iloc[:, :1], val.iloc[:, 1:], val.iloc[:, :1], test.iloc[:, 1:], test.iloc[:, :1]
 
 
 def save(model, column_to_predict: str):

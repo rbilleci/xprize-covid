@@ -3,9 +3,10 @@ from datetime import date, timedelta
 import pandas as pd
 
 import oxford_loader
-from datasets_constants import PATH_DATA_BASELINE, REFERENCE_COUNTRIES_AND_REGIONS, DATE_LOWER_BOUND
+from datasets_constants import PATH_DATA_BASELINE, REFERENCE_COUNTRIES_AND_REGIONS, DATE_LOWER_BOUND, \
+    DAYS_TO_STRIP_FROM_DATASET
 from oxford_constants import COUNTRY_NAME, REGION_NAME, DATE, NPI_COLUMNS, C1, C2, C3, C4, C5, C6, C7, C8, H1, \
-    H2, H3, H6, INDEX_COLUMNS, GEO_ID, IS_SPECIALTY, LABEL, PREDICTED_NEW_CASES
+    H2, H3, H6, INDEX_COLUMNS, GEO_ID, IS_SPECIALTY, LABEL, PREDICTED_NEW_CASES, COLUMNS_TO_APPLY_NULL_MARKER
 from pipeline import df_00_splitter, df_10_data_timeinfo, df_11_countryinfo, df_60_imputer, df_70_label, df_80_scaler, \
     df_90_ohe
 
@@ -15,30 +16,16 @@ def get_datasets_for_training(fn: str,
                               days_for_test: int,
                               column_to_predict: str) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     df = oxford_loader.load(fn)
+    df = apply_pipeline_preprocessing(df, column_to_predict)
+    # the last day will have no label, so we strip it out
+    # do this after computing the label and before the split
+    df = apply_last_days_stripping(df)
+    # Do the splits!
     train, validation, test = df_00_splitter.split(df, days_for_validation, days_for_test)
-    train = pipeline_for_training(train, column_to_predict)
-    validation = pipeline_for_training(validation, column_to_predict)
-    test = pipeline_for_training(test, column_to_predict)
+    train = apply_training_pipeline(train)
+    validation = apply_training_pipeline(validation)
+    test = apply_training_pipeline(test)
     return train, validation, test
-
-
-def pipeline_for_training(df: pd.DataFrame, column_to_predict: str) -> pd.DataFrame:
-    df = df_10_data_timeinfo.apply(df)
-    df = df_11_countryinfo.apply(df)
-    df = df_60_imputer.apply(df)
-    df = df_70_label.apply(df, column_to_predict)  # apply label before scaling, so that it is not scaled twice
-
-    df = df_80_scaler.apply(df)
-    df = df_90_ohe.apply(df)
-
-    # Move Label to Front
-    df_label = df[LABEL]
-    df = df.drop(labels=[LABEL], axis=1)
-    df.insert(0, LABEL, df_label)
-
-    # Drop columns that are not used
-    df = df.drop(GEO_ID, axis=1)
-    return df
 
 
 def get_dataset_for_prediction(start_date: date,
@@ -46,6 +33,7 @@ def get_dataset_for_prediction(start_date: date,
                                path_future_data: str) -> pd.DataFrame:
     """ Get the baseline data, determine the max date, and set the initial window to be used """
     df = oxford_loader.load(PATH_DATA_BASELINE, load_for_prediction=True)
+    df = apply_pipeline_preprocessing(df)
     df = df.set_index(INDEX_COLUMNS, drop=True)
 
     """ Fill in the data frame with missing rows for all past dates and future dates """
@@ -76,6 +64,38 @@ def get_dataset_for_prediction(start_date: date,
     df[PREDICTED_NEW_CASES] = 0.0
     df[IS_SPECIALTY] = 0
 
+    return df
+
+
+def apply_last_days_stripping(df: pd.DataFrame) -> pd.DataFrame:
+    date_max = df[DATE].max() - timedelta(days=DAYS_TO_STRIP_FROM_DATASET)
+    return df.loc[(df[DATE] <= date_max)]
+
+
+def apply_pipeline_preprocessing(df: pd.DataFrame, column_to_predict: str) -> pd.DataFrame:
+    # Add null marker
+    for e in df.items():
+        name, series = e[0], e[1]
+        if name in COLUMNS_TO_APPLY_NULL_MARKER:
+            df[f"{name}_N"] = series.apply(lambda x: (1.0 if pd.isnull(x) else 0.0))
+    # Impute missing values
+    df = df_60_imputer.apply(df)
+    # add the label
+    df = df_70_label.apply(df, column_to_predict)
+    return df
+
+
+def apply_training_pipeline(df: pd.DataFrame) -> pd.DataFrame:
+    df = df_10_data_timeinfo.apply(df)
+    df = df_11_countryinfo.apply(df)
+    df = df_80_scaler.apply(df)
+    df = df_90_ohe.apply(df)
+    # Move Label to Front
+    df_label = df[LABEL]
+    df = df.drop(labels=[LABEL], axis=1)
+    df.insert(0, LABEL, df_label)
+    # Drop columns that are not used
+    df = df.drop(GEO_ID, axis=1)
     return df
 
 

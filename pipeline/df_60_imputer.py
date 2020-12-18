@@ -1,11 +1,11 @@
 import pandas as pd
 
-from oxford_constants import DATE, COUNTRY_NAME, REGION_NAME
+from oxford_constants import DATE, GEO_ID
 
 
 def apply(df: pd.DataFrame) -> pd.DataFrame:
     df.sort_values(DATE, inplace=True)
-    grouped = df.groupby([COUNTRY_NAME, REGION_NAME])
+    grouped = df.groupby([GEO_ID])
     grouped = grouped.apply(impute_missing_values_for_group)
     return grouped.reset_index(drop=True)
 

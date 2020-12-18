@@ -3,7 +3,8 @@ import datetime
 import pandas as pd
 
 from datasets_constants import REFERENCE_COUNTRIES_AND_REGIONS
-from oxford_constants import DATE, REGION_NAME, REGION_CODE, COUNTRY_NAME, GEO_ID, COLUMNS_ALLOWED_ON_READ
+from oxford_constants import DATE, REGION_NAME, REGION_CODE, COUNTRY_NAME, GEO_ID, COLUMNS_ALLOWED_ON_READ, \
+    COLUMNS_TO_APPLY_NULL_MARKER
 
 
 def load(fn: str, load_for_prediction=False) -> pd.DataFrame:

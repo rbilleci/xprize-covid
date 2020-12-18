@@ -15,3 +15,6 @@ DATE_UPPER_BOUND = datetime.date(2021, 12, 31)
 DATE_ORDINAL_LOWER_BOUND = DATE_LOWER_BOUND.toordinal()
 DATE_ORDINAL_UPPER_BOUND = DATE_UPPER_BOUND.toordinal()
 LABEL_SCALING = 1e6
+
+# dataset may change daily, but it seems we have to strip off two days of garbage data at the end...
+DAYS_TO_STRIP_FROM_DATASET = 2
