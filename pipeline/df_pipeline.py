@@ -6,7 +6,7 @@ import oxford_loader
 from datasets_constants import PATH_DATA_BASELINE, REFERENCE_COUNTRIES_AND_REGIONS, DATE_LOWER_BOUND, \
     DAYS_TO_STRIP_FROM_DATASET
 from oxford_constants import COUNTRY_NAME, REGION_NAME, DATE, NPI_COLUMNS, C1, C2, C3, C4, C5, C6, C7, C8, H1, \
-    H2, H3, H6, INDEX_COLUMNS, GEO_ID, IS_SPECIALTY, LABEL, PREDICTED_NEW_CASES, COLUMNS_TO_APPLY_NULL_MARKER
+    H2, H3, H6, GEO_ID, IS_SPECIALTY, LABEL, PREDICTED_NEW_CASES, COLUMNS_TO_APPLY_NULL_MARKER
 from pipeline import df_00_splitter, df_10_data_timeinfo, df_11_countryinfo, df_60_imputer, df_70_label, df_80_scaler, \
     df_90_ohe
 
@@ -34,7 +34,6 @@ def get_dataset_for_prediction(start_date: date,
                                path_future_data: str) -> pd.DataFrame:
     """ Get the baseline data, determine the max date, and set the initial window to be used """
     df = oxford_loader.load(PATH_DATA_BASELINE, load_for_prediction=True)
-    df = df.set_index(INDEX_COLUMNS, drop=True)  # <----- should we instead have drop = true?
 
     """ Fill in the data frame with missing rows for all past dates and future dates """
     df_geos = pd.read_csv(REFERENCE_COUNTRIES_AND_REGIONS)
@@ -43,12 +42,17 @@ def get_dataset_for_prediction(start_date: date,
     for _, geo in df_geos.iterrows():
         idx_country = geo[COUNTRY_NAME]
         idx_region = geo[REGION_NAME]
+        # TODO see if we can use some indexes to improve performance
         for idx_date in date_range(DATE_LOWER_BOUND, end_date):
             if (idx_country, idx_region, pd.to_datetime(idx_date)) not in df.index:
-                new_rows.append({COUNTRY_NAME: idx_country, REGION_NAME: idx_region, DATE: pd.to_datetime(idx_date)})
+                new_rows.append({COUNTRY_NAME: idx_country,
+                                 REGION_NAME: idx_region,
+                                 DATE: pd.to_datetime(idx_date),
+                                 GEO_ID: f"{idx_country}{idx_region}"})
+    new_df = pd.DataFrame.from_records(new_rows)
 
-    df = df.reset_index()  # <------------------------ why do we need reset index?
-    df = df.append(new_rows, ignore_index=False)  # <------------------------ why do we need ignore index this?
+    """ Merge the two result sets """
+    df = df.append(new_df)
 
     """ Assign values from the NPI data """
     df_future = oxford_loader.load(path_future_data)
@@ -56,6 +60,7 @@ def get_dataset_for_prediction(start_date: date,
         idx_c = f[COUNTRY_NAME]
         idx_r = f[REGION_NAME]
         idx_d = f[DATE]
+        # TODO see if we can use some indexes to improve performance
         df.loc[df.index.isin([[idx_c, idx_r, idx_d]]), NPI_COLUMNS] = \
             [f[C1], f[C2], f[C3], f[C4], f[C5], f[C6], f[C7], f[C8], f[H1], f[H2], f[H3], f[H6]]
 
@@ -65,7 +70,6 @@ def get_dataset_for_prediction(start_date: date,
     """ Add specialty columns """
     df[PREDICTED_NEW_CASES] = 0.0
     df[IS_SPECIALTY] = 0
-
     return df
 
 

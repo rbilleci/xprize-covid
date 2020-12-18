@@ -23,24 +23,27 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
     log.info(f"predicting {start_date_str} - {end_date_str} for '{path_future_data}' with output '{path_output_file}'")
     start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
     end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
-    log.info(f"parsed start date as: {start_date}")
-    log.info(f"parsed end date as: {end_date}")
 
     """ Load the dataframe that contains all historic and current data, with placeholders for future data"""
     df = df_pipeline.get_dataset_for_prediction(start_date, end_date, path_future_data)
 
-    """ Load the model and run the predictions through each date """
+    """ Load the model """
     model = load_model(PREDICTED_NEW_CASES)
-    for prediction_date in date_range(start_date, end_date):  # TODO: need to fix the start date???
-        predict_day(model, prediction_date)
+
+    """ Iterate over each day """
+    grouped = df.groupby(DATE)
+    grouped = grouped.apply(lambda group: predict_day(model, group))
+    # df = grouped.reset_index(drop=True)
+    # for prediction_date in date_range(start_date, end_date):  # TODO: need to fix the start date???
+    #    predict_day(model, prediction_date)
 
     """ Write the predictions """
-    write_predictions(start_date, end_date, df, path_output_file)
+    # write_predictions(start_date, end_date, df, path_output_file)
 
 
-def predict_day(model_cases, prediction_date: datetime.date) -> None:
-    log.info(f"START prediction {prediction_date}")
-    log.info(f"END   prediction {prediction_date}")
+def predict_day(model_cases, group: pd.DataFrame) -> None:
+    print(f"START prediction {group[DATE].min()} - {group[DATE].max()}")
+    # log.info(f"START prediction {type(group)}")
 
 
 def predict_country(model_cases) -> None:

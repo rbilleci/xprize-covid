@@ -16,6 +16,7 @@ class TestPredict(unittest.TestCase):
             os.chdir("../")
 
     def test_predict(self):
+        # TODO: fixme!
         # test a single day in the past
         #  self.predict_for_range("2020-10-01", "2020-10-01")
         # test two days in the past
