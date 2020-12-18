@@ -43,7 +43,7 @@ def predict_day(model_cases, prediction_date: datetime.date) -> None:
     log.info(f"END   prediction {prediction_date}")
 
 
-def predict_country(model_cases, model_deaths) -> None:
+def predict_country(model_cases) -> None:
     return None
 
 
