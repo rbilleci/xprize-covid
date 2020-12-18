@@ -16,7 +16,7 @@ def get_datasets_for_training(fn: str,
                               days_for_test: int) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     df = oxford_loader.load(fn)
     df = apply_pipeline_preprocessing(df)
-    # Add the label, computing the value
+    # Add the label, after the pipeline, but before the stripping of dates
     df = df_70_label.apply(df)
     # the last day will have no label, so we strip it out
     # do this after computing the label and before the split
@@ -34,10 +34,7 @@ def get_dataset_for_prediction(start_date: date,
                                path_future_data: str) -> pd.DataFrame:
     """ Get the baseline data, determine the max date, and set the initial window to be used """
     df = oxford_loader.load(PATH_DATA_BASELINE, load_for_prediction=True)
-    df = apply_pipeline_preprocessing(df)
-    # Add the label
-    df[PREDICTED_NEW_CASES] = 0.0
-    df = df.set_index(INDEX_COLUMNS, drop=True)
+    df = df.set_index(INDEX_COLUMNS, drop=True)  # <----- should we instead have drop = true?
 
     """ Fill in the data frame with missing rows for all past dates and future dates """
     df_geos = pd.read_csv(REFERENCE_COUNTRIES_AND_REGIONS)
@@ -49,19 +46,21 @@ def get_dataset_for_prediction(start_date: date,
         for idx_date in date_range(DATE_LOWER_BOUND, end_date):
             if (idx_country, idx_region, pd.to_datetime(idx_date)) not in df.index:
                 new_rows.append({COUNTRY_NAME: idx_country, REGION_NAME: idx_region, DATE: pd.to_datetime(idx_date)})
-    df = df.reset_index()
-    df = df.append(new_rows, ignore_index=True)
+
+    df = df.reset_index()  # <------------------------ why do we need reset index?
+    df = df.append(new_rows, ignore_index=False)  # <------------------------ why do we need ignore index this?
 
     """ Assign values from the NPI data """
     df_future = oxford_loader.load(path_future_data)
-    for _, f in df_future.iterrows():
+    for idx, f in df_future.iterrows():
         idx_c = f[COUNTRY_NAME]
         idx_r = f[REGION_NAME]
         idx_d = f[DATE]
         df.loc[df.index.isin([[idx_c, idx_r, idx_d]]), NPI_COLUMNS] = \
             [f[C1], f[C2], f[C3], f[C4], f[C5], f[C6], f[C7], f[C8], f[H1], f[H2], f[H3], f[H6]]
 
-    """ Fill in missing data """
+    """ Fill in missing data, interpolating values where needed """
+    df = apply_pipeline_preprocessing(df)
 
     """ Add specialty columns """
     df[PREDICTED_NEW_CASES] = 0.0
@@ -76,12 +75,10 @@ def apply_last_days_stripping(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def apply_pipeline_preprocessing(df: pd.DataFrame) -> pd.DataFrame:
-    # Add null marker
-    for e in df.items():
-        name, series = e[0], e[1]
-        if name in COLUMNS_TO_APPLY_NULL_MARKER:
-            df[f"{name}_N"] = series.apply(lambda x: (1.0 if pd.isnull(x) else 0.0))
-    # Impute missing values
+    # apply null marker
+    for name in COLUMNS_TO_APPLY_NULL_MARKER:
+        df[f"{name}_N"] = df[name].apply(lambda x: (1.0 if pd.isnull(x) else 0.0))
+    # impute
     df = df_60_imputer.apply(df)
     return df
 
