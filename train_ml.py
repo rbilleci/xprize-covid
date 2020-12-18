@@ -134,5 +134,5 @@ pd.options.display.max_columns = 4
 pd.options.display.max_rows = 1000
 pd.options.display.max_info_columns = 1000
 
-train(CONFIRMED_DEATHS, PREDICTED_NEW_DEATHS)
-#train(CONFIRMED_CASES, PREDICTED_NEW_CASES)
+#train(CONFIRMED_DEATHS, PREDICTED_NEW_DEATHS)
+train(CONFIRMED_CASES, PREDICTED_NEW_CASES)
