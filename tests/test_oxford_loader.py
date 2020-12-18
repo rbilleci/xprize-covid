@@ -1,8 +1,8 @@
 import os
 
-from loader import oxford_loader
 import unittest
 import datasets_constants
+import oxford_loader
 
 
 class TestOxfordLoader(unittest.TestCase):

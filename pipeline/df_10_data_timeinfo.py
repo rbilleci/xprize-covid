@@ -2,7 +2,8 @@ import calendar
 import datetime
 import pandas as pd
 import numpy as np
-from oxford_constants import *
+from oxford_constants import DATE, DAY_OF_MONTH_SIN, DAY_OF_MONTH_COS, DAY_OF_WEEK, DAY_OF_WEEK_COS, DAY_OF_YEAR_COS, \
+    DAY_OF_WEEK_SIN, DAY_OF_YEAR_SIN
 
 twopi = 2 * np.pi
 

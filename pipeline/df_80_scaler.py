@@ -1,6 +1,7 @@
 import pandas as pd
 import datetime
-from oxford_constants import *
+from oxford_constants import C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6, CASES, DEATHS, DATE, PREDICTED_NEW_CASES, \
+    LABEL
 
 scales = {C1: 3.0,
           C2: 3.0,

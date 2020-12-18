@@ -1,5 +1,5 @@
 import pandas as pd
-from oxford_constants import *
+from oxford_constants import DATE
 
 
 def split(df: pd.DataFrame,

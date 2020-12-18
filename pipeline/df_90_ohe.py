@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
 from datasets import datasets
-from oxford_constants import *
+from oxford_constants import COUNTRY_NAME, REGION_NAME, CONTINENT, DAY_OF_WEEK
 
 
 def apply(df: pd.DataFrame) -> pd.DataFrame:
-    df = ohe(df, COUNTRY_NAME, datasets.ALLOWED_COUNTRIES)
+    df = ohe(df, COUNTRY_NAME,
+             datasets.ALLOWED_COUNTRIES)  # TODO: after hash encoding, we can remove the allowed countries variable
     df = ohe(df, REGION_NAME, datasets.region_name_to_region_code.keys())
     df = ohe(df, CONTINENT, datasets.country_name_to_continent.values())
     df = ohe(df, DAY_OF_WEEK, range(0, 7))

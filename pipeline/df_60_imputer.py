@@ -1,20 +1,20 @@
 import pandas as pd
 
-from oxford_constants import *
+from oxford_constants import DATE, COUNTRY_NAME, REGION_NAME
 
 
 def apply(df: pd.DataFrame) -> pd.DataFrame:
     df.sort_values(DATE, inplace=True)
-    grouped = df.groupby(GROUP_GEO)
-    grouped = grouped.apply(impute_group)
+    grouped = df.groupby([COUNTRY_NAME, REGION_NAME])
+    grouped = grouped.apply(impute_missing_values_for_group)
     return grouped.reset_index(drop=True)
 
 
-def impute_group(group):
-    return group.apply(impute_series)
+def impute_missing_values_for_group(group):
+    return group.apply(impute_missing_values_for_series)
 
 
-def impute_series(series: pd.Series):
+def impute_missing_values_for_series(series: pd.Series):
     if series.dtype == 'float64':
         if pd.isnull(series.iloc[0]):
             series.iloc[0] = 0.0  # Set the initial value to zero, if it is undefined

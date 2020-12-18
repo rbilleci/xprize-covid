@@ -1,6 +1,7 @@
 import pandas as pd
 from datasets import datasets, datasets_working_days
-from oxford_constants import *
+from oxford_constants import CONTINENT, IS_WORKING_DAY_TODAY, IS_WORKING_DAY_TOMORROW, IS_WORKING_DAY_YESTERDAY, \
+    COUNTRY_NAME, DATE
 
 
 def apply(df: pd.DataFrame) -> pd.DataFrame:

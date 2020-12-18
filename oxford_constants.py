@@ -1,4 +1,5 @@
 # Constants from oxford file
+GEO_ID = 'GEO_ID'
 COUNTRY_NAME = 'CountryName'
 COUNTRY_CODE = 'CountryCode'
 REGION_NAME = 'RegionName'
@@ -34,17 +35,18 @@ IS_WORKING_DAY_TOMORROW = 'is_working_day_tomorrow'
 
 # Columns used for id of a row or grouping
 INDEX_COLUMNS = [COUNTRY_NAME, REGION_NAME, DATE]
-GROUP_GEO = [COUNTRY_NAME, REGION_NAME]
+NPI_COLUMNS = [C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6]
 
-# ML columns
-LABEL = 'LABEL'
+LABEL = 'Label'
 
 # SPECIAL HANDLING
 COLUMNS_TO_APPLY_NULL_MARKER = sorted([])
 
 # OUTPUT COLUMNS
 PREDICTED_NEW_CASES = 'PredictedDailyNewCases'
+PREDICTED_NEW_DEATHS = 'PredictedDailyNewDeaths'
 IS_SPECIALTY = 'IsSpecialty'
+OUTPUT_COLUMNS = [COUNTRY_NAME, REGION_NAME, DATE, PREDICTED_NEW_CASES, IS_SPECIALTY]
 
 # The columns we allow on read, filtering out those that do not belong
 COLUMNS_ALLOWED_ON_READ = sorted([C1,
@@ -64,3 +66,5 @@ COLUMNS_ALLOWED_ON_READ = sorted([C1,
                                   H3,
                                   H6,
                                   REGION_NAME])
+
+PREDICTION_WINDOW_LIMIT = 100

@@ -10,9 +10,9 @@ import pandas as pd
 from tensorflow.python.keras.callbacks import EarlyStopping
 
 import datasets_constants
+from oxford_constants import LABEL, CASES, PREDICTED_NEW_CASES
 
 from pipeline import df_pipeline
-from oxford_constants import *
 
 
 class HP:
@@ -27,7 +27,7 @@ class HP:
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
     DAYS_FOR_VALIDATION = 31  # 31
     DAYS_FOR_TEST = 14  # 14
-    TRAINING_EPOCHS = 10000
+    TRAINING_EPOCHS = 10
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
     EARLY_STOPPING_PATIENCE = 20
@@ -81,25 +81,35 @@ def get_model(dimensions):
     return model
 
 
-def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
-    # train, validation, and test
-    tr, v, test = df_pipeline.process_for_training(datasets_constants.PATH_DATA_BASELINE,
-                                                   HP.DAYS_FOR_VALIDATION,
-                                                   HP.DAYS_FOR_TEST)
+def get_data(column_to_predict: str) -> (
+        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
+    tr, v, test = df_pipeline.get_datasets_for_training(datasets_constants.PATH_DATA_BASELINE,
+                                                        HP.DAYS_FOR_VALIDATION,
+                                                        HP.DAYS_FOR_TEST,
+                                                        column_to_predict)
     tr = tr.sample(frac=1).reset_index(drop=True)
     v = v.sample(frac=1).reset_index(drop=True)
     test = test.sample(frac=1).reset_index(drop=True)
     return tr.iloc[:, 1:], tr.iloc[:, :1], v.iloc[:, 1:], v.iloc[:, :1], test.iloc[:, 1:], test.iloc[:, :1]
 
 
-def save(model):
+def save(model, column_to_predict: str):
     print("saving model")
-    model.save("model", overwrite=True, include_optimizer=True, save_format='tf')
+    model.save(f"models/{column_to_predict}", overwrite=True, include_optimizer=True, save_format='tf')
 
 
-def train():
+def train(column_to_predict: str, model_name: str):
     # Get the data
-    train_x, train_y, validation_x, validation_y, test_x, test_y = get_data()
+    train_x, train_y, validation_x, validation_y, test_x, test_y = get_data(column_to_predict)
+
+    pd.options.display.max_columns = 4
+    pd.options.display.max_rows = 100
+    pd.options.display.max_info_columns = 1000
+    train_x.info()
+    print(train_x.sample(10))
+    train_y.info()
+    print(train_y.sample(10))
+
     # Train
     model = get_model(train_x.shape[1])
     history = model.fit(train_x,
@@ -123,7 +133,8 @@ def train():
         ty = train_y.iloc[i]
         print(f"{model.predict(np.array([tx]))[0][0] * 1e6}\t\t{1e6 * ty[LABEL]}")
 
-    save(model)
+    save(model, model_name)
 
 
-train()
+# Train to get the model for confirmed cases
+train(CASES, PREDICTED_NEW_CASES)

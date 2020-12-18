@@ -1,10 +1,12 @@
+from datetime import timedelta
+
 import pandas as pd
 import pycountry_convert
-import datasets_constants
 from workalendar.registry import registry
-from loader import oxford_loader
-from datetime import timedelta
-import datetime
+
+import datasets_constants
+import oxford_loader
+from datasets_constants import *
 from oxford_constants import *
 
 
@@ -46,8 +48,8 @@ for index, row in df.iterrows():
 
 # generate working day information for each country
 default_calendar = registry.get('US')()
-start_date = datetime.date(2020, 1, 1)  # TODO: factor out start date across all code
-end_date = datetime.date(2021, 12, 31)  # TODO: factor out end date across all code
+start_date = DATE_LOWER_BOUND
+end_date = DATE_UPPER_BOUND
 
 non_working_dates = {}
 
