@@ -6,7 +6,7 @@ from datetime import date
 import keras.models as km
 import pandas as pd
 
-from oxford_constants import DATE, OUTPUT_COLUMNS, PREDICTED_NEW_CASES, PREDICTED_NEW_DEATHS
+from oxford_constants import DATE, OUTPUT_COLUMNS, PREDICTED_NEW_CASES
 from pipeline import df_pipeline
 
 log.basicConfig(filename='predict.log', level=log.INFO, format='%(asctime)s\t%(levelname)s\t%(filename)s\t%(message)s')
@@ -30,16 +30,15 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
     df = df_pipeline.get_dataset_for_prediction(start_date, end_date, path_future_data)
 
     """ Load the model and run the predictions through each date """
-    model_cases = load_model(PREDICTED_NEW_CASES)
-    model_deaths = load_model(PREDICTED_NEW_DEATHS)
+    model = load_model(PREDICTED_NEW_CASES)
     for prediction_date in date_range(start_date, end_date):  # TODO: need to fix the start date???
-        predict_day(model_cases, model_deaths, prediction_date)
+        predict_day(model, prediction_date)
 
     """ Write the predictions """
     write_predictions(start_date, end_date, df, path_output_file)
 
 
-def predict_day(model_cases, model_deaths, prediction_date: datetime.date) -> None:
+def predict_day(model_cases, prediction_date: datetime.date) -> None:
     log.info(f"START prediction {prediction_date}")
     log.info(f"END   prediction {prediction_date}")
 

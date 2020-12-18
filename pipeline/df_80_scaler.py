@@ -1,7 +1,8 @@
 import pandas as pd
 
-from datasets_constants import DATE_ORDINAL_UPPER_BOUND, DATE_ORDINAL_LOWER_BOUND
-from oxford_constants import C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6, CONFIRMED_CASES, CONFIRMED_DEATHS, DATE, LABEL
+from datasets_constants import DATE_ORDINAL_UPPER_BOUND, DATE_ORDINAL_LOWER_BOUND, LABEL_SCALING
+from oxford_constants import C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6, CONFIRMED_CASES, CONFIRMED_DEATHS, DATE, \
+    LABEL
 
 scales = {C1: 3.0,
           C2: 3.0,
@@ -15,9 +16,9 @@ scales = {C1: 3.0,
           H2: 3.0,
           H3: 2.0,
           H6: 4.0,
-          CONFIRMED_CASES: 1e9,  # 1 billion
-          CONFIRMED_DEATHS: 1e8,  # 100 million
-          LABEL: 1e6
+          CONFIRMED_CASES: 1e8,  # 100 million
+          CONFIRMED_DEATHS: 1e7,  # 10 million
+          LABEL: LABEL_SCALING
           }
 
 

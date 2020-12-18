@@ -38,13 +38,13 @@ INDEX_COLUMNS = [COUNTRY_NAME, REGION_NAME, DATE]
 NPI_COLUMNS = [C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6]
 
 LABEL = 'Label'
+INCLUDE_CONFIRMED_CASES = False
 
 # SPECIAL HANDLING
 COLUMNS_TO_APPLY_NULL_MARKER = sorted([])
 
 # OUTPUT COLUMNS
 PREDICTED_NEW_CASES = 'PredictedDailyNewCases'
-PREDICTED_NEW_DEATHS = 'PredictedDailyNewDeaths'
 IS_SPECIALTY = 'IsSpecialty'
 OUTPUT_COLUMNS = [COUNTRY_NAME, REGION_NAME, DATE, PREDICTED_NEW_CASES, IS_SPECIALTY]
 
@@ -59,7 +59,7 @@ COLUMNS_ALLOWED_ON_READ = sorted([C1,
                                   C8,
                                   CONFIRMED_CASES,
                                   COUNTRY_NAME,
-                                  CONFIRMED_DEATHS,
+                                  # CONFIRMED_DEATHS,
                                   DATE,
                                   H1,
                                   H2,

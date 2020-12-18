@@ -5,7 +5,7 @@ import pandas as pd
 import oxford_loader
 from datasets_constants import PATH_DATA_BASELINE, REFERENCE_COUNTRIES_AND_REGIONS, DATE_LOWER_BOUND
 from oxford_constants import COUNTRY_NAME, REGION_NAME, DATE, NPI_COLUMNS, C1, C2, C3, C4, C5, C6, C7, C8, H1, \
-    H2, H3, H6, INDEX_COLUMNS, GEO_ID, IS_SPECIALTY, LABEL, PREDICTED_NEW_CASES, PREDICTED_NEW_DEATHS
+    H2, H3, H6, INDEX_COLUMNS, GEO_ID, IS_SPECIALTY, LABEL, PREDICTED_NEW_CASES
 from pipeline import df_00_splitter, df_10_data_timeinfo, df_11_countryinfo, df_60_imputer, df_70_label, df_80_scaler, \
     df_90_ohe
 
@@ -75,7 +75,6 @@ def get_dataset_for_prediction(start_date: date,
     """ Add specialty columns """
     df[PREDICTED_NEW_CASES] = 0.0
     df[IS_SPECIALTY] = 0
-    df[PREDICTED_NEW_DEATHS] = 0.0
 
     return df
 

@@ -1,17 +1,16 @@
-from keras.models import Sequential
-from keras.layers import Dropout
-from keras.layers import Dense
-from keras.layers.advanced_activations import LeakyReLU
-from keras.layers.advanced_activations import ELU
-from keras.layers.advanced_activations import PReLU
-import tensorflow as tf
 import numpy as np
 import pandas as pd
+import tensorflow as tf
+from keras.layers import Dense
+from keras.layers import Dropout
+from keras.layers.advanced_activations import ELU
+from keras.layers.advanced_activations import LeakyReLU
+from keras.layers.advanced_activations import PReLU
+from keras.models import Sequential
 from tensorflow.python.keras.callbacks import EarlyStopping
 
 import datasets_constants
-from oxford_constants import LABEL, CONFIRMED_CASES, PREDICTED_NEW_CASES, PREDICTED_NEW_DEATHS, CONFIRMED_DEATHS
-
+from oxford_constants import LABEL, CONFIRMED_CASES, PREDICTED_NEW_CASES
 from pipeline import df_pipeline
 
 
@@ -20,7 +19,7 @@ class HP:
     OPTIMIZER = tf.keras.optimizers.Adam()
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()
-    LAYER_SIZE = 500  # 200
+    LAYER_SIZE = 200  # 200
     LAYERS = 2  # 2
     LAYER_DROPOUT = False
     LAYER_DROPOUT_RATE = 0.1
@@ -123,7 +122,8 @@ def train(column_to_predict: str, model_name: str):
     for i in range(0, 100):
         tx = train_x.iloc[i]
         ty = train_y.iloc[i]
-        print(f"{model.predict(np.array([tx]))[0][0] * 1e6}\t\t{1e6 * ty[LABEL]}")
+        print(
+            f"{model.predict(np.array([tx]))[0][0] * datasets_constants.LABEL_SCALING}\t\t{datasets_constants.LABEL_SCALING * ty[LABEL]}")
 
     save(model, model_name)
 
@@ -134,5 +134,4 @@ pd.options.display.max_columns = 4
 pd.options.display.max_rows = 1000
 pd.options.display.max_info_columns = 1000
 
-#train(CONFIRMED_DEATHS, PREDICTED_NEW_DEATHS)
 train(CONFIRMED_CASES, PREDICTED_NEW_CASES)
