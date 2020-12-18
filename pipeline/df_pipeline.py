@@ -29,9 +29,6 @@ def pipeline_for_training(df: pd.DataFrame, column_to_predict: str) -> pd.DataFr
     df = df_60_imputer.apply(df)
     df = df_70_label.apply(df, column_to_predict)  # apply label before scaling, so that it is not scaled twice
 
-    print(df[[LABEL, CONFIRMED_DEATHS, DATE, COUNTRY_NAME]].tail(1000))
-    #print(df[[LABEL, CONFIRMED_CASES, DATE, COUNTRY_NAME]].tail(1000))
-
     df = df_80_scaler.apply(df)
     df = df_90_ohe.apply(df)
 

@@ -20,7 +20,7 @@ class HP:
     OPTIMIZER = tf.keras.optimizers.Adam()
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()
-    LAYER_SIZE = 200  # 200
+    LAYER_SIZE = 500  # 200
     LAYERS = 2  # 2
     LAYER_DROPOUT = False
     LAYER_DROPOUT_RATE = 0.1
@@ -30,7 +30,7 @@ class HP:
     TRAINING_EPOCHS = 10
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
-    EARLY_STOPPING_PATIENCE = 20
+    EARLY_STOPPING_PATIENCE = 100
     CALLBACKS = [EarlyStopping(patience=EARLY_STOPPING_PATIENCE, restore_best_weights=True)]
 
 
@@ -135,4 +135,4 @@ pd.options.display.max_rows = 1000
 pd.options.display.max_info_columns = 1000
 
 train(CONFIRMED_DEATHS, PREDICTED_NEW_DEATHS)
-train(CONFIRMED_CASES, PREDICTED_NEW_CASES)
+#train(CONFIRMED_CASES, PREDICTED_NEW_CASES)
