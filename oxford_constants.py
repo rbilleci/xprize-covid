@@ -37,7 +37,6 @@ IS_WORKING_DAY_TOMORROW = 'is_working_day_tomorrow'
 INDEX_COLUMNS = [COUNTRY_NAME, REGION_NAME, DATE]
 NPI_COLUMNS = [C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6]
 
-LABEL = 'Label'
 INCLUDE_CONFIRMED_CASES = False
 
 # SPECIAL HANDLING
@@ -66,5 +65,3 @@ COLUMNS_ALLOWED_ON_READ = sorted([C1,
                                   H3,
                                   H6,
                                   REGION_NAME])
-
-PREDICTION_WINDOW_LIMIT = 100

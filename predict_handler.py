@@ -5,8 +5,13 @@ from datetime import date
 
 import keras.models as km
 import pandas as pd
+import numpy as np
+from pandas._libs.tslibs.timestamps import Timestamp
+from tensorflow.python.keras.models import Model
 
-from oxford_constants import DATE, OUTPUT_COLUMNS, PREDICTED_NEW_CASES
+from datasets_constants import LABEL_SCALING
+from oxford_constants import DATE, OUTPUT_COLUMNS, PREDICTED_NEW_CASES, GEO_ID, CONFIRMED_CASES, IS_SPECIALTY
+from oxford_loader import df_geos
 from pipeline import df_pipeline
 
 log.basicConfig(filename='predict.log', level=log.INFO, format='%(asctime)s\t%(levelname)s\t%(filename)s\t%(message)s')
@@ -24,30 +29,50 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
     start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
     end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
 
+    """ Load the unique geo ids will handle """
+
     """ Load the dataframe that contains all historic and current data, with placeholders for future data"""
-    df = df_pipeline.get_dataset_for_prediction(start_date, end_date, path_future_data)
+    df = df_pipeline.get_dataset_for_prediction(start_date,
+                                                end_date,
+                                                path_future_data)
 
     """ Load the model """
     model = load_model(PREDICTED_NEW_CASES)
 
     """ Iterate over each day """
-    grouped = df.groupby(DATE)
-    grouped = grouped.apply(lambda group: predict_day(model, group))
-    # df = grouped.reset_index(drop=True)
-    # for prediction_date in date_range(start_date, end_date):  # TODO: need to fix the start date???
-    #    predict_day(model, prediction_date)
+    grouped = df.groupby([DATE])
+    predictions = {}
+    for day, df_day in grouped:
+        predict_day(model, day, df_day, predictions)
+    # TODO: ungroup?
 
     """ Write the predictions """
+
+    # TODO: !
     # write_predictions(start_date, end_date, df, path_output_file)
 
 
-def predict_day(model_cases, group: pd.DataFrame) -> None:
-    print(f"START prediction {group[DATE].min()} - {group[DATE].max()}")
-    # log.info(f"START prediction {type(group)}")
+def predict_day(model: Model,
+                day: Timestamp,
+                df_group: pd.DataFrame,
+                predictions: {}) -> None:
+    print(f"START prediction {day}")
+    # TODO: we need the correct start date, think backward to know when we'll have final values...
+    # Assign the prediction from the previous day to the current
+    for _, geo in df_geos.iterrows():
+        geo_id = geo[GEO_ID]
+        if geo_id in predictions:
+            df_group[CONFIRMED_CASES][(df_group[GEO_ID == geo_id])] = df_group[CONFIRMED_CASES] + predictions[geo_id]
+        predictions[geo_id] = None
 
-
-def predict_country(model_cases) -> None:
-    return None
+    # Calculate the next predictions!
+    for _, r in df_group.iterrows():
+        df_x = pd.DataFrame.from_records([r])
+        df_x = df_pipeline.apply_training_pipeline(df_x)
+        df_x = df_x.drop([PREDICTED_NEW_CASES, IS_SPECIALTY], axis=1)
+        prediction = model.predict(np.array([df_x.iloc[0]]))[0][0] * LABEL_SCALING
+        print(f"f{prediction} was predicted")
+        predictions[r[GEO_ID]] = prediction
 
 
 def load_model(model_name: str):

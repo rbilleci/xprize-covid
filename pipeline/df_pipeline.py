@@ -3,10 +3,9 @@ from datetime import date, timedelta
 import pandas as pd
 
 import oxford_loader
-from datasets_constants import PATH_DATA_BASELINE, REFERENCE_COUNTRIES_AND_REGIONS, DATE_LOWER_BOUND, \
-    DAYS_TO_STRIP_FROM_DATASET
+from datasets_constants import PATH_DATA_BASELINE, DATE_LOWER_BOUND, DAYS_TO_STRIP_FROM_DATASET
 from oxford_constants import COUNTRY_NAME, REGION_NAME, DATE, NPI_COLUMNS, C1, C2, C3, C4, C5, C6, C7, C8, H1, \
-    H2, H3, H6, GEO_ID, IS_SPECIALTY, LABEL, PREDICTED_NEW_CASES, COLUMNS_TO_APPLY_NULL_MARKER
+    H2, H3, H6, GEO_ID, IS_SPECIALTY, PREDICTED_NEW_CASES, COLUMNS_TO_APPLY_NULL_MARKER
 from pipeline import df_00_splitter, df_10_data_timeinfo, df_11_countryinfo, df_60_imputer, df_70_label, df_80_scaler, \
     df_90_ohe
 
@@ -36,10 +35,9 @@ def get_dataset_for_prediction(start_date: date,
     df = oxford_loader.load(PATH_DATA_BASELINE, load_for_prediction=True)
 
     """ Fill in the data frame with missing rows for all past dates and future dates """
-    df_geos = pd.read_csv(REFERENCE_COUNTRIES_AND_REGIONS)
-    df_geos[REGION_NAME] = df_geos[REGION_NAME].fillna('')
     new_rows = []
-    for _, geo in df_geos.iterrows():
+
+    for _, geo in oxford_loader.df_geos.iterrows():
         idx_country = geo[COUNTRY_NAME]
         idx_region = geo[REGION_NAME]
         # TODO see if we can use some indexes to improve performance
@@ -48,7 +46,7 @@ def get_dataset_for_prediction(start_date: date,
                 new_rows.append({COUNTRY_NAME: idx_country,
                                  REGION_NAME: idx_region,
                                  DATE: pd.to_datetime(idx_date),
-                                 GEO_ID: f"{idx_country}{idx_region}"})
+                                 GEO_ID: geo[GEO_ID]})
     new_df = pd.DataFrame.from_records(new_rows)
 
     """ Merge the two result sets """
@@ -92,10 +90,12 @@ def apply_training_pipeline(df: pd.DataFrame) -> pd.DataFrame:
     df = df_11_countryinfo.apply(df)
     df = df_80_scaler.apply(df)
     df = df_90_ohe.apply(df)
+    # Sort columns by name
+    df = df.reindex(sorted(df.columns), axis=1)
     # Move Label to Front
-    df_label = df[LABEL]
-    df = df.drop(labels=[LABEL], axis=1)
-    df.insert(0, LABEL, df_label)
+    df_label = df[PREDICTED_NEW_CASES]
+    df = df.drop(labels=[PREDICTED_NEW_CASES], axis=1)
+    df.insert(0, PREDICTED_NEW_CASES, df_label)
     # Drop columns that are not used
     df = df.drop(GEO_ID, axis=1)
     return df

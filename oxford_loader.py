@@ -3,8 +3,12 @@ import datetime
 import pandas as pd
 
 from datasets_constants import REFERENCE_COUNTRIES_AND_REGIONS
-from oxford_constants import DATE, REGION_NAME, REGION_CODE, COUNTRY_NAME, GEO_ID, COLUMNS_ALLOWED_ON_READ, \
-    COLUMNS_TO_APPLY_NULL_MARKER
+from oxford_constants import DATE, REGION_NAME, REGION_CODE, COUNTRY_NAME, GEO_ID, COLUMNS_ALLOWED_ON_READ
+
+# Dataframe of Geo data
+df_geos = pd.read_csv(REFERENCE_COUNTRIES_AND_REGIONS)
+df_geos[REGION_NAME] = df_geos[REGION_NAME].fillna('')
+df_geos[GEO_ID] = df_geos[COUNTRY_NAME] + df_geos[REGION_NAME]
 
 
 def load(fn: str, load_for_prediction=False) -> pd.DataFrame:
@@ -32,12 +36,10 @@ def apply_geo_grouping(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def apply_geo_filter(df: pd.DataFrame, load_for_prediction: bool) -> pd.DataFrame:
-    if load_for_prediction:
-        df_geos = pd.read_csv(REFERENCE_COUNTRIES_AND_REGIONS)
-        df_geos[REGION_NAME] = df_geos[REGION_NAME].fillna('')
-        df_geos[GEO_ID] = df_geos[COUNTRY_NAME] + df_geos[REGION_NAME]
-        allowed_geo_ids = df_geos[GEO_ID].values.tolist()
-        df = df[df[GEO_ID].isin(allowed_geo_ids)]
+    # todo: take advantage of other data in the future, for training
+    #if load_for_prediction:
+    allowed_geo_ids = df_geos[GEO_ID].values.tolist()
+    df = df[df[GEO_ID].isin(allowed_geo_ids)]
     return df
 
 

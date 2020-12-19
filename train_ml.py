@@ -10,7 +10,7 @@ from keras.models import Sequential
 from tensorflow.python.keras.callbacks import EarlyStopping
 
 import datasets_constants
-from oxford_constants import LABEL, PREDICTED_NEW_CASES
+from oxford_constants import PREDICTED_NEW_CASES
 from pipeline import df_pipeline
 
 
@@ -26,7 +26,7 @@ class HP:
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
     DAYS_FOR_VALIDATION = 31  # 31
     DAYS_FOR_TEST = 14  # 14
-    TRAINING_EPOCHS = 1000
+    TRAINING_EPOCHS = 10
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
     EARLY_STOPPING_PATIENCE = 100
@@ -85,7 +85,7 @@ def get_data() -> (
     tr, val, test = df_pipeline.get_datasets_for_training(datasets_constants.PATH_DATA_BASELINE,
                                                           HP.DAYS_FOR_VALIDATION,
                                                           HP.DAYS_FOR_TEST)
-
+    tr.info()
     tr = tr.sample(frac=1).reset_index(drop=True)
     val = val.sample(frac=1).reset_index(drop=True)
     test = test.sample(frac=1).reset_index(drop=True)
@@ -100,6 +100,9 @@ def save(model, model_name: str):
 def train(model_name: str):
     # Get the data
     train_x, train_y, validation_x, validation_y, test_x, test_y = get_data()
+
+    print(train_x.head(10))
+    print(train_y.head(10))
 
     # Train
     model = get_model(train_x.shape[1])
@@ -123,7 +126,7 @@ def train(model_name: str):
         tx = train_x.iloc[i]
         ty = train_y.iloc[i]
         print(
-            f"{model.predict(np.array([tx]))[0][0] * datasets_constants.LABEL_SCALING}\t\t{datasets_constants.LABEL_SCALING * ty[LABEL]}")
+            f"{model.predict(np.array([tx]))[0][0] * datasets_constants.LABEL_SCALING}\t\t{datasets_constants.LABEL_SCALING * ty[PREDICTED_NEW_CASES]}")
 
     save(model, model_name)
 
