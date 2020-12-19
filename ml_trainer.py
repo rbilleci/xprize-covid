@@ -84,6 +84,7 @@ def get_model(dimensions):
 def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
     # load the data and perform the split
     df_train, df_val, df_test = ml_splitter.split(load_ml_data(), HP.DAYS_FOR_VALIDATION, HP.DAYS_FOR_TEST)
+
     # transform the data for the neural network
     df_train = ml_transformer.transform(df_train, for_prediction=False)
     df_val = ml_transformer.transform(df_val, for_prediction=False)

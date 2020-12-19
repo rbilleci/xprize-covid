@@ -51,7 +51,7 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
             confirmed_cases[geo_id] = 0
             new_cases[geo_id] = 0
         else:
-            print(f"{geo_id}:  confirmed = [{result[CONFIRMED_CASES]}], new = [{result[PREDICTED_NEW_CASES]}]")
+            # print(f"{geo_id}:  confirmed = [{result[CONFIRMED_CASES]}], new = [{result[PREDICTED_NEW_CASES]}]")
             confirmed_cases[geo_id] = result[CONFIRMED_CASES]
             new_cases[geo_id] = result[PREDICTED_NEW_CASES]
 
@@ -59,7 +59,12 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
     model = load_model(PREDICTED_NEW_CASES)
 
     # predict away!
-    df = df.groupby(DATE).apply(lambda g: predict_day(model, g, new_cases, confirmed_cases)).reset_index(drop=True)
+    # TODO: verify if we are using the 22nd as the entry...
+    df = df[df[DATE] >= pd.to_datetime(DATE_SUBMISSION_CUTOFF)].groupby(DATE).apply(
+        lambda group: predict_day(model,
+                                  group,
+                                  new_cases,
+                                  confirmed_cases)).reset_index(drop=True)
 
     # save it baby!
     # write_predictions(start_date, end_date, df, path_output_file)
@@ -69,6 +74,8 @@ def predict_day(model: Model,
                 df_group: pd.DataFrame,
                 new_cases,
                 confirmed_cases) -> None:
+    log.info(f"predicting for {df_group[DATE].iloc[0]}")
+
     # Apply the previous day's prediction and confirmed cases to the current day
     df_group[CONFIRMED_CASES] = df_group[GEO_ID].apply(lambda x: confirmed_cases[x] + new_cases[x])
 
@@ -84,8 +91,6 @@ def predict_day(model: Model,
         new_cases[geo_id] = value
         confirmed_cases[geo_id] += value
         idx = idx + 1
-    print(new_cases)
-    print(confirmed_cases)
 
 
 def load_model(model_name: str):
