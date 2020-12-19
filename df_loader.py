@@ -6,18 +6,20 @@ from datetime import date, timedelta
 
 def load_ml_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     df = oxford_loader.load(PATH_DATA_BASELINE)
-    df = df.sort_values(DATE)
-    df = mark_null_columns(df)
-    df = impute(df)
-    df = compute_label(df)
+    df = prepare_data(df)
     df = truncate_last_day(df)  # for training only, since we don't have the new cases for the final day
     return df
 
 
 def load_prediction_data(path_future_data: str, end_date: date) -> pd.DataFrame:
     df = oxford_loader.load(PATH_DATA_BASELINE)
-    df = append_future_data(df, path_future_data, end_date)
-    df = df.sort_values(DATE)
+    df = add_future_rows(df, end_date)
+    df = add_future_npi_data(df, path_future_data)
+    df = prepare_data(df)
+    return df
+
+
+def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     df = mark_null_columns(df)
     df = impute(df)
     df = compute_label(df)
@@ -25,7 +27,7 @@ def load_prediction_data(path_future_data: str, end_date: date) -> pd.DataFrame:
     return df
 
 
-def append_future_data(df: pd.DataFrame, path_future_data: str, end_date: date) -> pd.DataFrame:
+def add_future_rows(df: pd.DataFrame, end_date: date) -> pd.DataFrame:
     # Add missing rows from start of time to end-date
     df = df.set_index(INDEX_COLUMNS, drop=False)
     new_rows = []
@@ -42,19 +44,19 @@ def append_future_data(df: pd.DataFrame, path_future_data: str, end_date: date) 
                                  CONFIRMED_CASES: 0.0})
     df = df.reset_index(drop=True)
     # Merge the new rows with the existing data frame, and resort the results by date
-    df = df.append(pd.DataFrame.from_records(new_rows), ignore_index=True).sort_values(DATE)
+    return df.append(pd.DataFrame.from_records(new_rows), ignore_index=True).sort_values(DATE)
 
-    # Assign NPI data
+
+def add_future_npi_data(df: pd.DataFrame, path_future_data: str) -> pd.DataFrame:
+    df = df.set_index(INDEX_COLUMNS, drop=False)  # Add the index again :)
     df_future = oxford_loader.load(path_future_data)
     for idx, f in df_future.iterrows():
         idx_c = f[COUNTRY_NAME]
         idx_r = f[REGION_NAME]
         idx_d = f[DATE]
-        # TODO see if we can use some indexes to improve performance
         df.loc[df.index.isin([[idx_c, idx_r, idx_d]]), NPI_COLUMNS] = \
             [f[C1], f[C2], f[C3], f[C4], f[C5], f[C6], f[C7], f[C8], f[H1], f[H2], f[H3], f[H6]]
-
-    return df
+    return df.reset_index(drop=True).sort_values(DATE)  # drop the index again :)
 
 
 def mark_null_columns(df: pd.DataFrame) -> pd.DataFrame:
