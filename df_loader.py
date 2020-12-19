@@ -10,7 +10,7 @@ def load_ml_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     df = mark_null_columns(df)
     df = impute(df)
     df = compute_label(df)
-    df = truncate_last_day(df)
+    df = truncate_last_day(df)  # for training only, since we don't have the new cases for the final day
     return df
 
 
@@ -21,7 +21,6 @@ def load_prediction_data(path_future_data: str, end_date: date) -> pd.DataFrame:
     df = mark_null_columns(df)
     df = impute(df)
     df = compute_label(df)
-    df = truncate_last_day(df)  # not 100% certain we want this, but it seems correct since the last days are wrong
     df[IS_SPECIALTY] = 0
     return df
 
@@ -42,8 +41,8 @@ def append_future_data(df: pd.DataFrame, path_future_data: str, end_date: date) 
                                  PREDICTED_NEW_CASES: 0.0,
                                  CONFIRMED_CASES: 0.0})
     df = df.reset_index(drop=True)
-    # Merge the new rows with the existing data frame
-    df = df.append(pd.DataFrame.from_records(new_rows))
+    # Merge the new rows with the existing data frame, and resort the results by date
+    df = df.append(pd.DataFrame.from_records(new_rows), ignore_index=True).sort_values(DATE)
 
     # Assign NPI data
     df_future = oxford_loader.load(path_future_data)
