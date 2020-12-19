@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 
 from constants import *
-from datasets import datasets, datasets_working_days
+import datasets
+import datasets_working_days
 
 
 def transform(df: pd.DataFrame, for_prediction=True) -> pd.DataFrame:
