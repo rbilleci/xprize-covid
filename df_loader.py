@@ -6,6 +6,7 @@ from datetime import date, timedelta
 
 def load_ml_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     df = oxford_loader.load(PATH_DATA_BASELINE)
+    df = df.sort_values(DATE)
     df = mark_null_columns(df)
     df = impute(df)
     df = compute_label(df)
@@ -16,27 +17,31 @@ def load_ml_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
 def load_prediction_data(path_future_data: str, end_date: date) -> pd.DataFrame:
     df = oxford_loader.load(PATH_DATA_BASELINE)
     df = append_future_data(df, path_future_data, end_date)
+    df = df.sort_values(DATE)
     df = mark_null_columns(df)
     df = impute(df)
-    df[PREDICTED_NEW_CASES] = 0.0
+    df = compute_label(df)
+    df = truncate_last_day(df)  # not 100% certain we want this, but it seems correct since the last days are wrong
     df[IS_SPECIALTY] = 0
     return df
 
 
 def append_future_data(df: pd.DataFrame, path_future_data: str, end_date: date) -> pd.DataFrame:
     # Add missing rows from start of time to end-date
+    df = df.set_index(INDEX_COLUMNS, drop=False)
     new_rows = []
     for _, geo in oxford_loader.df_geos.iterrows():
         idx_country = geo[COUNTRY_NAME]
         idx_region = geo[REGION_NAME]
-        # TODO see if we can use some indexes to improve performance
         for idx_date in date_range(DATE_LOWER_BOUND, end_date):
             if (idx_country, idx_region, pd.to_datetime(idx_date)) not in df.index:
                 new_rows.append({COUNTRY_NAME: idx_country,
                                  REGION_NAME: idx_region,
                                  DATE: pd.to_datetime(idx_date),
-                                 GEO_ID: geo[GEO_ID]})
-
+                                 GEO_ID: geo[GEO_ID],
+                                 PREDICTED_NEW_CASES: 0.0,
+                                 CONFIRMED_CASES: 0.0})
+    df = df.reset_index(drop=True)
     # Merge the new rows with the existing data frame
     df = df.append(pd.DataFrame.from_records(new_rows))
 
@@ -60,7 +65,7 @@ def mark_null_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def impute(df: pd.DataFrame) -> pd.DataFrame:
-    return df.sort_values(DATE).groupby(GEO_ID).apply(impute_group).reset_index(drop=True)
+    return df.groupby(GEO_ID).apply(impute_group).reset_index(drop=True)
 
 
 def impute_group(group):
@@ -69,21 +74,21 @@ def impute_group(group):
 
 def impute_group_series(series: pd.Series):
     if series.dtype == 'float64':
-        if pd.isnull(series.iloc[0]):
-            series.iloc[0] = 0.0
-        return series.interpolate(method='linear')
+        if pd.isnull(series.iloc[0]):  # TODO: is this right???
+            series.iloc[0] = 0.0  # TODO: is this right???
+            # TODO Fix interpolation
+        # return series.interpolate(method='linear')
+        return series
     else:
         return series
 
 
 def compute_label(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.sort_values(DATE).groupby(GEO_ID).apply(compute_label_for_group).reset_index(drop=True)
-    df[PREDICTED_NEW_CASES].clip(lower=0.0)
-    return df
+    return df.groupby(GEO_ID).apply(compute_label_for_group).reset_index(drop=True)
 
 
-def compute_label_for_group(group):
-    group[PREDICTED_NEW_CASES] = -group[CONFIRMED_CASES].diff(-1).fillna(0.0)
+def compute_label_for_group(group: pd.DataFrame) -> pd.DataFrame:
+    group[PREDICTED_NEW_CASES] = group[CONFIRMED_CASES].diff(-1).fillna(0.0).apply(lambda x: max(0, -x))
     return group
 
 

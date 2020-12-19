@@ -80,7 +80,7 @@ def transform_column_order(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def filter_input_columns(df: pd.DataFrame) -> pd.DataFrame:
-    return df.drop(GEO_ID, axis=1)
+    return df.drop([GEO_ID, PREDICTED_NEW_CASES, IS_SPECIALTY], errors='ignore', axis=1)
 
 
 def scale_value(x, min_value, max_value):

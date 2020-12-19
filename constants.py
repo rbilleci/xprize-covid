@@ -1,5 +1,6 @@
 import datetime
 
+DATE_SUBMISSION_CUTOFF = datetime.date(2020, 12, 22)  # the last known date we'll use to rely on reference data
 DATE_LOWER_BOUND = datetime.date(2020, 1, 1)
 DATE_UPPER_BOUND = datetime.date(2021, 12, 31)
 DATE_ORDINAL_LOWER_BOUND = DATE_LOWER_BOUND.toordinal()

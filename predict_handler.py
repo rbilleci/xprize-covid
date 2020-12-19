@@ -3,9 +3,7 @@ import os
 from datetime import date
 
 import keras.models as km
-import numpy as np
 import pandas as pd
-from pandas._libs.tslibs.timestamps import Timestamp
 from tensorflow.python.keras.models import Model
 
 import df_loader
@@ -28,48 +26,66 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
     start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
     end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
 
-    """ Load the unique geo ids will handle """
-
-    """ Load the dataframe that contains all historic and current data, with placeholders for future data"""
+    """ 
+    Load the dataframe that contains all historic and current data, with placeholders for future data.
+    Then, initialize the structures we use to store the previous days new cases and confirmed case.
+    The values are initialized to those from the last known date in the reference data:
+        
+        Confirmed Cases: for each geo, we search within the date range of our reference data, looking for the 
+        MOST RECENT non-zero value, since we assume there may missing/corrupt data in the data set
+        
+        Predicted New Cases: this is calculated using a 'diff' from the dataset. 
+        This is calculated when the data is loaded
+    """
     df = df_loader.load_prediction_data(path_future_data, end_date)
+    new_cases = {}
+    confirmed_cases = {}
 
-    """ Load the model """
+    for _, geo in df_geos.iterrows():
+        geo_id = geo[GEO_ID]
+        result = df[(df[GEO_ID] == geo_id) &
+                    (df[DATE] < pd.to_datetime(DATE_SUBMISSION_CUTOFF)) &
+                    (df[CONFIRMED_CASES] > 0)].iloc[-2]  # the last row will have no predicted data
+        if result is None:
+            log.error(f"no reference data found for {geo_id}")
+            confirmed_cases[geo_id] = 0
+            new_cases[geo_id] = 0
+        else:
+            print(f"{geo_id}:  confirmed = [{result[CONFIRMED_CASES]}], new = [{result[PREDICTED_NEW_CASES]}]")
+            confirmed_cases[geo_id] = result[CONFIRMED_CASES]
+            new_cases[geo_id] = result[PREDICTED_NEW_CASES]
+
+    # load our model
     model = load_model(PREDICTED_NEW_CASES)
 
-    """ Iterate over each day """
-    grouped = df.groupby([DATE])
-    predictions = {}
-    for day, df_day in grouped:
-        predict_day(model, day, df_day, predictions)
-    # TODO: ungroup?
+    # predict away!
+    df = df.groupby(DATE).apply(lambda g: predict_day(model, g, new_cases, confirmed_cases)).reset_index(drop=True)
 
-    """ Write the predictions """
-
-    # TODO: !
+    # save it baby!
     # write_predictions(start_date, end_date, df, path_output_file)
 
 
 def predict_day(model: Model,
-                day: Timestamp,
                 df_group: pd.DataFrame,
-                predictions: {}) -> None:
-    print(f"START prediction {day}")
-    # TODO: we need the correct start date, think backward to know when we'll have final values...
-    # Assign the prediction from the previous day to the current
-    for _, geo in df_geos.iterrows():
-        geo_id = geo[GEO_ID]
-        if geo_id in predictions:
-            df_group[CONFIRMED_CASES][(df_group[GEO_ID == geo_id])] = df_group[CONFIRMED_CASES] + predictions[geo_id]
-        predictions[geo_id] = None
+                new_cases,
+                confirmed_cases) -> None:
+    # Apply the previous day's prediction and confirmed cases to the current day
+    df_group[CONFIRMED_CASES] = df_group[GEO_ID].apply(lambda x: confirmed_cases[x] + new_cases[x])
 
-    # Calculate the next predictions!
-    for _, r in df_group.iterrows():
-        df_x = pd.DataFrame.from_records([r])
-        df_x = ml_transformer.transform(df_x)
-        df_x = df_x.drop([PREDICTED_NEW_CASES, IS_SPECIALTY], axis=1)
-        prediction = model.predict(np.array([df_x.iloc[0]]))[0][0] * LABEL_SCALING
-        print(f"f{prediction} was predicted")
-        predictions[r[GEO_ID]] = prediction
+    # Calculate the next predictions!, perform a batch transformation of the full day records
+    df_transformed = ml_transformer.transform(df_group.copy())
+    model_predictions = model.predict(df_transformed)
+
+    # Apply the predicted values back on the dataset
+    idx = 0
+    for _, row in df_group.iterrows():  # we need to map the geo_id to the index in the predictions
+        geo_id = row[GEO_ID]
+        value = model_predictions[idx][0] * LABEL_SCALING
+        new_cases[geo_id] = value
+        confirmed_cases[geo_id] += value
+        idx = idx + 1
+    print(new_cases)
+    print(confirmed_cases)
 
 
 def load_model(model_name: str):
