@@ -1,7 +1,7 @@
 import os
 
 import unittest
-import datasets_constants
+from constants import *
 import oxford_loader
 
 
@@ -12,9 +12,9 @@ class TestOxfordLoader(unittest.TestCase):
             os.chdir("../")
 
     def test_loader(self):
-        df = oxford_loader.load(datasets_constants.PATH_DATA_BASELINE)
+        df = oxford_loader.load(PATH_DATA_BASELINE)
         df.info()
-        df = oxford_loader.load(datasets_constants.PATH_DATA_HISTORICAL)
+        df = oxford_loader.load(PATH_DATA_HISTORICAL)
         df.info()
-        df = oxford_loader.load(datasets_constants.PATH_DATA_FUTURE)
+        df = oxford_loader.load(PATH_DATA_FUTURE)
         df.info()

@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import ml_splitter
+import ml_transformer
+
 from keras.layers import Dense
 from keras.layers import Dropout
 from keras.layers.advanced_activations import ELU
@@ -8,10 +11,8 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.advanced_activations import PReLU
 from keras.models import Sequential
 from tensorflow.python.keras.callbacks import EarlyStopping
-
-import datasets_constants
-from oxford_constants import PREDICTED_NEW_CASES
-from pipeline import df_pipeline
+from df_loader import load_ml_data
+from constants import *
 
 
 class HP:
@@ -80,15 +81,18 @@ def get_model(dimensions):
     return model
 
 
-def get_data() -> (
-        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
-    tr, val, test = df_pipeline.get_datasets_for_training(datasets_constants.PATH_DATA_BASELINE,
-                                                          HP.DAYS_FOR_VALIDATION,
-                                                          HP.DAYS_FOR_TEST)
-    tr.info()
-    tr = tr.sample(frac=1).reset_index(drop=True)
-    val = val.sample(frac=1).reset_index(drop=True)
-    test = test.sample(frac=1).reset_index(drop=True)
+def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
+    # load the data and perform the split
+    df_train, df_val, df_test = ml_splitter.split(load_ml_data(), HP.DAYS_FOR_VALIDATION, HP.DAYS_FOR_TEST)
+    # transform the data for the neural network
+    df_train = ml_transformer.transform(df_train)
+    df_val = ml_transformer.transform(df_val)
+    df_test = ml_transformer.transform(df_test)
+
+    # TODO: check if we can skip this randomization step
+    tr = df_train.sample(frac=1).reset_index(drop=True)
+    val = df_val.sample(frac=1).reset_index(drop=True)
+    test = df_test.sample(frac=1).reset_index(drop=True)
     return tr.iloc[:, 1:], tr.iloc[:, :1], val.iloc[:, 1:], val.iloc[:, :1], test.iloc[:, 1:], test.iloc[:, :1]
 
 
@@ -98,13 +102,7 @@ def save(model, model_name: str):
 
 
 def train(model_name: str):
-    # Get the data
     train_x, train_y, validation_x, validation_y, test_x, test_y = get_data()
-
-    print(train_x.head(10))
-    print(train_y.head(10))
-
-    # Train
     model = get_model(train_x.shape[1])
     history = model.fit(train_x,
                         train_y,
@@ -126,7 +124,7 @@ def train(model_name: str):
         tx = train_x.iloc[i]
         ty = train_y.iloc[i]
         print(
-            f"{model.predict(np.array([tx]))[0][0] * datasets_constants.LABEL_SCALING}\t\t{datasets_constants.LABEL_SCALING * ty[PREDICTED_NEW_CASES]}")
+            f"{model.predict(np.array([tx]))[0][0] * LABEL_SCALING}\t\t{LABEL_SCALING * ty[PREDICTED_NEW_CASES]}")
 
     save(model, model_name)
 

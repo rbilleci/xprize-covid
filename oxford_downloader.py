@@ -2,8 +2,7 @@ import pathlib
 import urllib.request
 
 import oxford_loader
-from datasets_constants import PATH_DATA_BASELINE, PATH_DATA_BASELINE_RAW, PATH_DATA
-from oxford_constants import GEO_ID
+from constants import *
 
 
 def download():

@@ -1,10 +1,8 @@
 import pandas as pd
-from oxford_constants import DATE
+from constants import DATE
 
 
-def split(df: pd.DataFrame,
-          days_for_validation: int,
-          days_for_test: int) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
+def split(df: pd.DataFrame, days_for_validation: int, days_for_test: int) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     # First, sort the data by date
     df = df.sort_values(DATE)
 

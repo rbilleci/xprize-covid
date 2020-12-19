@@ -1,6 +1,6 @@
 import os
 import unittest
-import datasets_constants
+from constants import *
 import predict as predict
 import pandas as pd
 
@@ -32,5 +32,4 @@ class TestPredict(unittest.TestCase):
 
     @staticmethod
     def predict_for_range(start_date, end_date):
-        predict.predict(start_date, end_date, datasets_constants.PATH_DATA_FUTURE,
-                        f"tests/data_test_predictions_{start_date}_{end_date}.log")
+        predict.predict(start_date, end_date, PATH_DATA_FUTURE, f"tests/test_predictions_{start_date}_{end_date}.log")

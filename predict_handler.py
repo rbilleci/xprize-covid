@@ -1,18 +1,17 @@
-import datetime
 import logging as log
 import os
 from datetime import date
 
 import keras.models as km
-import pandas as pd
 import numpy as np
+import pandas as pd
 from pandas._libs.tslibs.timestamps import Timestamp
 from tensorflow.python.keras.models import Model
 
-from datasets_constants import LABEL_SCALING
-from oxford_constants import DATE, OUTPUT_COLUMNS, PREDICTED_NEW_CASES, GEO_ID, CONFIRMED_CASES, IS_SPECIALTY
+import df_loader
+import ml_transformer
+from constants import *
 from oxford_loader import df_geos
-from pipeline import df_pipeline
 
 log.basicConfig(filename='predict.log', level=log.INFO, format='%(asctime)s\t%(levelname)s\t%(filename)s\t%(message)s')
 
@@ -32,9 +31,7 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
     """ Load the unique geo ids will handle """
 
     """ Load the dataframe that contains all historic and current data, with placeholders for future data"""
-    df = df_pipeline.get_dataset_for_prediction(start_date,
-                                                end_date,
-                                                path_future_data)
+    df = df_loader.load_prediction_data(path_future_data, end_date)
 
     """ Load the model """
     model = load_model(PREDICTED_NEW_CASES)
@@ -68,7 +65,7 @@ def predict_day(model: Model,
     # Calculate the next predictions!
     for _, r in df_group.iterrows():
         df_x = pd.DataFrame.from_records([r])
-        df_x = df_pipeline.apply_training_pipeline(df_x)
+        df_x = ml_transformer.transform(df_x)
         df_x = df_x.drop([PREDICTED_NEW_CASES, IS_SPECIALTY], axis=1)
         prediction = model.predict(np.array([df_x.iloc[0]]))[0][0] * LABEL_SCALING
         print(f"f{prediction} was predicted")
