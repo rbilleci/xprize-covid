@@ -2,6 +2,7 @@ import pandas as pd
 import oxford_loader
 from constants import *
 from datetime import date, timedelta
+import logging as log
 
 
 def load_ml_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
@@ -12,17 +13,31 @@ def load_ml_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
 
 
 def load_prediction_data(path_future_data: str, end_date: date) -> pd.DataFrame:
+    log.warning("loading reference data")
+    print("loading reference data")
     df = oxford_loader.load(PATH_DATA_BASELINE)
+
+    log.warning("adding rows for future dates")
+    print("adding rows for future dates")
     df = add_future_rows(df, end_date)
+
+    log.warning("adding data from npi file")
+    print("adding data from npi file")
     df = add_future_npi_data(df, path_future_data)
+
+    log.warning("preparing dataset")
+    print("preparing")
     df = prepare_data(df)
     df[IS_SPECIALTY] = 0
     return df
 
 
 def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
+    log.warning("adding null markers")
     df = mark_null_columns(df)
+    log.warning("imputing")
     df = impute(df)
+    log.warning("computing labels")
     df = compute_label(df)
     return df
 
@@ -48,14 +63,17 @@ def add_future_rows(df: pd.DataFrame, end_date: date) -> pd.DataFrame:
 
 
 def add_future_npi_data(df: pd.DataFrame, path_future_data: str) -> pd.DataFrame:
-    df = df.set_index(INDEX_COLUMNS, drop=False)  # Add the index again :)
+    # filter out older data from the npi file
     df_future = oxford_loader.load(path_future_data)
-    for idx, f in df_future.iterrows():
-        idx_c = f[COUNTRY_NAME]
-        idx_r = f[REGION_NAME]
-        idx_d = f[DATE]
-        df.loc[df.index.isin([[idx_c, idx_r, idx_d]]), NPI_COLUMNS] = \
-            [f[C1], f[C2], f[C3], f[C4], f[C5], f[C6], f[C7], f[C8], f[H1], f[H2], f[H3], f[H6]]
+    df_future = df_future.loc[(df[DATE] >= pd.to_datetime(DATE_SUBMISSION_CUTOFF))]
+
+    df = df.set_index(INDEX_COLUMNS, drop=False)  # Add the index again :)
+    # for idx, f in df_future.iterrows():
+    #    idx_c = f[COUNTRY_NAME]
+    #    idx_r = f[REGION_NAME]
+    #    idx_d = f[DATE]
+    #    df.loc[df.index.isin([[idx_c, idx_r, idx_d]]), NPI_COLUMNS] = \
+    #        [f[C1], f[C2], f[C3], f[C4], f[C5], f[C6], f[C7], f[C8], f[H1], f[H2], f[H3], f[H6]]
     return df.reset_index(drop=True).sort_values(DATE)  # drop the index again :)
 
 

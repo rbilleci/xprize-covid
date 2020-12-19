@@ -17,6 +17,7 @@ log.basicConfig(filename='predict.log', level=log.INFO, format='%(asctime)s\t%(l
 def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_output_file: str) -> None:
     """ Check the path, since the instructions are not really clear how bootstrap.sh is called """
     log.info(f"working directory is: {os.getcwd()}")
+    print(f"working directory is: {os.getcwd()}")
     if os.getcwd() == '/home/xprize':
         log.info('changing working directory to /home/xprize/work')
         os.chdir('/home/xprize/work')
@@ -80,6 +81,7 @@ def predict_day(model: Model,
                 new_cases,
                 confirmed_cases) -> pd.DataFrame:
     log.info(f"predicting for {df_group[DATE].iloc[0]}")
+    print(f"predicting for {df_group[DATE].iloc[0]}")
 
     # Apply the previous day's prediction and confirmed cases to the current day
     df_group[CONFIRMED_CASES] = df_group[GEO_ID].apply(lambda x: confirmed_cases[x] + new_cases[x])

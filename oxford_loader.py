@@ -4,10 +4,22 @@ import pandas as pd
 
 from constants import *
 
+
+def load_geos():
+    try:
+        tmp = pd.read_csv(REFERENCE_COUNTRIES_AND_REGIONS)
+        tmp[REGION_NAME] = tmp[REGION_NAME].fillna('')
+        tmp[GEO_ID] = tmp[COUNTRY_NAME] + tmp[REGION_NAME]
+        return tmp
+    except FileNotFoundError:
+        tmp = pd.read_csv('work/' + REFERENCE_COUNTRIES_AND_REGIONS)
+        tmp[REGION_NAME] = tmp[REGION_NAME].fillna('')
+        tmp[GEO_ID] = tmp[COUNTRY_NAME] + tmp[REGION_NAME]
+        return tmp
+
+
 # Dataframe of Geo data
-df_geos = pd.read_csv(REFERENCE_COUNTRIES_AND_REGIONS)
-df_geos[REGION_NAME] = df_geos[REGION_NAME].fillna('')
-df_geos[GEO_ID] = df_geos[COUNTRY_NAME] + df_geos[REGION_NAME]
+df_geos = load_geos()
 
 
 def load(fn: str) -> pd.DataFrame:
