@@ -16,6 +16,7 @@ def load_prediction_data(path_future_data: str, end_date: date) -> pd.DataFrame:
     df = add_future_rows(df, end_date)
     df = add_future_npi_data(df, path_future_data)
     df = prepare_data(df)
+    df[IS_SPECIALTY] = 0
     return df
 
 
@@ -23,7 +24,6 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     df = mark_null_columns(df)
     df = impute(df)
     df = compute_label(df)
-    df[IS_SPECIALTY] = 0
     return df
 
 
@@ -75,11 +75,9 @@ def impute_group(group):
 
 def impute_group_series(series: pd.Series):
     if series.dtype == 'float64':
-        if pd.isnull(series.iloc[0]):  # TODO: is this right???
-            series.iloc[0] = 0.0  # TODO: is this right???
-            # TODO Fix interpolation
-        # return series.interpolate(method='linear')
-        return series
+        if pd.isnull(series.iloc[0]):  # set the initial row value to 0, if it is null
+            series.iloc[0] = 0.0
+        return series.ffill()
     else:
         return series
 

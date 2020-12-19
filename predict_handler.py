@@ -44,14 +44,17 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
     for _, geo in df_geos.iterrows():
         geo_id = geo[GEO_ID]
         result = df[(df[GEO_ID] == geo_id) &
-                    (df[DATE] < pd.to_datetime(DATE_SUBMISSION_CUTOFF)) &
-                    (df[CONFIRMED_CASES] > 0)].iloc[-2]  # the last row will have no predicted data
+                    (df[DATE] <= pd.to_datetime(DATE_SUBMISSION_CUTOFF)) &
+                    # for an index of -1, the date will be the 22nd: there will be no confirmed cases
+                    # for an index of -2, the date will be the 21st: there will be cases, but nothing to predict
+                    # for an index of -3, the date will be the 20th: there will be cases, and a prediction
+                    (df[CONFIRMED_CASES] > 0)].iloc[-3]
         if result is None:
             log.error(f"no reference data found for {geo_id}")
             confirmed_cases[geo_id] = 0
             new_cases[geo_id] = 0
         else:
-            # print(f"{geo_id}:  confirmed = [{result[CONFIRMED_CASES]}], new = [{result[PREDICTED_NEW_CASES]}]")
+            print(f"{geo_id}:  confirmed = [{result[CONFIRMED_CASES]}], new = [{result[PREDICTED_NEW_CASES]}]")
             confirmed_cases[geo_id] = result[CONFIRMED_CASES]
             new_cases[geo_id] = result[PREDICTED_NEW_CASES]
 
@@ -59,21 +62,23 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
     model = load_model(PREDICTED_NEW_CASES)
 
     # predict away!
-    # TODO: verify if we are using the 22nd as the entry...
-    df = df[df[DATE] >= pd.to_datetime(DATE_SUBMISSION_CUTOFF)].groupby(DATE).apply(
-        lambda group: predict_day(model,
-                                  group,
-                                  new_cases,
-                                  confirmed_cases)).reset_index(drop=True)
+    df = df[df[DATE] >= pd.to_datetime(DATE_SUBMISSION_CUTOFF)]
+    df = df.groupby(DATE).apply(
+        lambda group: predict_day(
+            model,
+            group,
+            new_cases,
+            confirmed_cases)).sort_values([COUNTRY_NAME, REGION_NAME, DATE])
+    df.info()
 
     # save it baby!
-    # write_predictions(start_date, end_date, df, path_output_file)
+    write_predictions(start_date, end_date, df, path_output_file)
 
 
 def predict_day(model: Model,
                 df_group: pd.DataFrame,
                 new_cases,
-                confirmed_cases) -> None:
+                confirmed_cases) -> pd.DataFrame:
     log.info(f"predicting for {df_group[DATE].iloc[0]}")
 
     # Apply the previous day's prediction and confirmed cases to the current day
@@ -91,6 +96,11 @@ def predict_day(model: Model,
         new_cases[geo_id] = value
         confirmed_cases[geo_id] += value
         idx = idx + 1
+
+    # Apply the predicted cases to the date
+    df_group[PREDICTED_NEW_CASES] = df_group[GEO_ID].apply(lambda x: new_cases[x])
+
+    return df_group
 
 
 def load_model(model_name: str):
