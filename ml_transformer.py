@@ -8,13 +8,13 @@ from constants import *
 from datasets import datasets, datasets_working_days
 
 
-def transform(df: pd.DataFrame) -> pd.DataFrame:
+def transform(df: pd.DataFrame, for_prediction=True) -> pd.DataFrame:
     df = transform_date(df)
     df = transform_country(df)
     df = transform_value_scale(df)
     df = transform_encoding(df)
     df = transform_column_order(df)
-    df = filter_input_columns(df)
+    df = filter_input_columns(df, for_prediction)
     return df
 
 
@@ -79,8 +79,9 @@ def transform_column_order(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def filter_input_columns(df: pd.DataFrame) -> pd.DataFrame:
-    return df.drop([GEO_ID, PREDICTED_NEW_CASES, IS_SPECIALTY], errors='ignore', axis=1)
+def filter_input_columns(df: pd.DataFrame, for_prediction: bool) -> pd.DataFrame:
+    to_drop = [GEO_ID, IS_SPECIALTY, PREDICTED_NEW_CASES] if for_prediction else [GEO_ID, IS_SPECIALTY]
+    return df.drop(to_drop, errors='ignore', axis=1)
 
 
 def scale_value(x, min_value, max_value):
