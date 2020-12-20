@@ -4,10 +4,8 @@ import pandas as pd
 import pycountry_convert
 from workalendar.registry import registry
 
-import datasets_constants
 import oxford_loader
-from datasets_constants import *
-from oxford_constants import *
+from constants import *
 
 
 def date_range(start_date, end_date, include_end_date):
@@ -18,11 +16,11 @@ def date_range(start_date, end_date, include_end_date):
         yield start_date + timedelta(n)
 
 
-df_countries = pd.read_csv(f"../{datasets_constants.REFERENCE_COUNTRIES_AND_REGIONS}")
+df_countries = pd.read_csv(f"../{REFERENCE_COUNTRIES_AND_REGIONS}")
 df_countries.fillna('', inplace=True)
 country_names = df_countries[COUNTRY_NAME].unique().tolist()
 
-df = oxford_loader.load(f"../{datasets_constants.PATH_DATA_BASELINE}")
+df = oxford_loader.load(f"../{PATH_DATA_BASELINE}")
 unmappable_country_alpha3_codes = sorted(['RKS'])
 unmappable_country_alpha2_codes = sorted(['XX', 'TL'])
 country_name_to_continent = {}

@@ -1,5 +1,6 @@
 import pandas as pd
 from constants import DATE
+from xlogger import log
 
 
 def split(df: pd.DataFrame, days_for_validation: int, days_for_test: int) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
@@ -15,9 +16,9 @@ def split(df: pd.DataFrame, days_for_validation: int, days_for_test: int) -> (pd
     df_test = df[df[DATE] >= date_start_test]
 
     # Debug the outpoint
-    print(f"Training Range:   {df_train[DATE].min().date()} - {df_train[DATE].max().date()}")
-    print(f"Validation Range: {df_validation[DATE].min().date()} - {df_validation[DATE].max().date()}")
-    print(f"Test Range:       {df_test[DATE].min().date()} - {df_test[DATE].max().date()}")
+    log(f"Training Range:   {df_train[DATE].min().date()} - {df_train[DATE].max().date()}")
+    log(f"Validation Range: {df_validation[DATE].min().date()} - {df_validation[DATE].max().date()}")
+    log(f"Test Range:       {df_test[DATE].min().date()} - {df_test[DATE].max().date()}")
 
     # Sanity Check
     if len(df.index) != len(df_train.index) + len(df_validation.index) + len(df_test.index):

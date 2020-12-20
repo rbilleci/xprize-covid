@@ -1,8 +1,8 @@
 import pandas as pd
 import oxford_loader
 from constants import *
+from xlogger import log
 from datetime import date, timedelta
-import logging as log
 
 
 def load_ml_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
@@ -13,31 +13,27 @@ def load_ml_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
 
 
 def load_prediction_data(path_future_data: str, end_date: date) -> pd.DataFrame:
-    log.warning("loading reference data")
-    print("loading reference data")
+    log("loading reference data")
     df = oxford_loader.load(PATH_DATA_BASELINE)
 
-    log.warning("adding rows for future dates")
-    print("adding rows for future dates")
+    log("adding rows for future dates")
     df = add_future_rows(df, end_date)
 
-    log.warning("adding data from npi file")
-    print("adding data from npi file")
+    log("adding data from npi file")
     df = add_future_npi_data(df, path_future_data)
 
-    log.warning("preparing dataset")
-    print("preparing")
+    log("preparing dataset")
     df = prepare_data(df)
     df[IS_SPECIALTY] = 0
     return df
 
 
 def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
-    log.warning("adding null markers")
+    log("adding null markers")
     df = mark_null_columns(df)
-    log.warning("imputing")
+    log("imputing")
     df = impute(df)
-    log.warning("computing labels")
+    log("computing labels")
     df = compute_label(df)
     return df
 

@@ -13,6 +13,7 @@ from keras.models import Sequential
 from tensorflow.python.keras.callbacks import EarlyStopping
 from df_loader import load_ml_data
 from constants import *
+from xlogger import log
 
 
 class HP:
@@ -98,7 +99,7 @@ def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Da
 
 
 def save(model, model_name: str):
-    print("saving model")
+    log("saving model")
     model.save(f"models/{model_name}", overwrite=True, include_optimizer=True, save_format='tf')
 
 
@@ -117,15 +118,14 @@ def train(model_name: str):
     loss_train = history.history['loss'][best_epoch]
     loss_validation = history.history['val_loss'][best_epoch]
     loss_test = model.evaluate(test_x, test_y)
-    print('loss, training:', loss_train)
-    print('loss, validation:', loss_validation)
-    print('loss, test:', loss_test)
+    log('loss, training:', loss_train)
+    log('loss, validation:', loss_validation)
+    log('loss, test:', loss_test)
 
     for i in range(0, 100):
         tx = train_x.iloc[i]
         ty = train_y.iloc[i]
-        print(
-            f"{model.predict(np.array([tx]))[0][0] * LABEL_SCALING}\t\t{LABEL_SCALING * ty[PREDICTED_NEW_CASES]}")
+        log(f"{model.predict(np.array([tx]))[0][0] * LABEL_SCALING}\t\t{LABEL_SCALING * ty[PREDICTED_NEW_CASES]}")
 
     save(model, model_name)
 
