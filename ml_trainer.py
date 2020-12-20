@@ -18,13 +18,13 @@ from xlogger import log
 
 class HP:
     KERNEL_INITIALIZER = 'glorot_uniform'
-    OPTIMIZER = tf.keras.optimizers.RMSprop()
+    OPTIMIZER = tf.keras.optimizers.Nadam()  # RMS prop gets about 0.0160 after 100 iterations
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()
     LAYER_SIZE = 200  # 200
     LAYERS = 2  # 2
     LAYER_DROPOUT = False
-    LAYER_DROPOUT_RATE = 0.1
+    LAYER_DROPOUT_RATE = 0.25
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
     DAYS_FOR_VALIDATION = 31  # 31
     DAYS_FOR_TEST = 14  # 14

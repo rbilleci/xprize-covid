@@ -136,10 +136,8 @@ def add_moving_averages_group_series(group: pd.DataFrame, series: pd.Series) -> 
 def add_moving_average_group_series_ma(group: pd.DataFrame, series: pd.Series, name) -> None:
     shifted_series = series.shift(COVID_INCUBATION_PERIOD)
     # calculate the ewm
-    group[name + SUFFIX_MA] = shifted_series.ewm(span=MOVING_AVERAGE_SPAN).mean()
-    group[name + SUFFIX_MA] = group[name + SUFFIX_MA].fillna(0.0)
-    # take a diff on the moving average
-    # lets not track the diff for now, unless it is confirmed or predicted cases
-    if name in [PREDICTED_NEW_CASES, CONFIRMED_CASES]:
-        group[name + SUFFIX_MA_DIFF] = group[name + SUFFIX_MA].diff()
-        group[name + SUFFIX_MA_DIFF] = group[name + SUFFIX_MA_DIFF].fillna(0.0)
+    #  group[name + SUFFIX_MA] = shifted_series.ewm(span=MOVING_AVERAGE_SPAN).mean()
+    #   group[name + SUFFIX_MA] = group[name + SUFFIX_MA].fillna(0.0)
+    #    if name in [PREDICTED_NEW_CASES, CONFIRMED_CASES]:
+    group[name + SUFFIX_MA_DIFF] = shifted_series.diff().ewm(span=MOVING_AVERAGE_SPAN).mean()
+    group[name + SUFFIX_MA_DIFF] = group[name + SUFFIX_MA_DIFF].fillna(0.0)
