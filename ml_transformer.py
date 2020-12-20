@@ -4,9 +4,9 @@ from calendar import monthrange
 import numpy as np
 import pandas as pd
 
-from constants import *
 import datasets
 import datasets_working_days
+from constants import *
 
 
 def transform(df: pd.DataFrame, for_prediction=True) -> pd.DataFrame:
@@ -41,14 +41,22 @@ def transform_country(df: pd.DataFrame) -> pd.DataFrame:
 def transform_value_scale(df: pd.DataFrame) -> pd.DataFrame:
     # Scale Standard Numeric Values
     for e in df.items():
-        name, series = e[0], e[1]
+        name, series = str(e[0]), e[1]
+
+        # Standard NPI data
         if name in INPUT_SCALE.keys():
-            df[name] = df[name].apply(lambda x: scale_value(x, 0, INPUT_SCALE.get(name)))
-        # TODO TODO: cleanup
-        if name.endswith('_sin') or name.endswith('_cos') or name.endswith('_SIN') or name.endswith('_COS'):
+            if name.endswith(SUFFIX_MA_DIFF):
+                df[name] = df[name].apply(lambda x: scale_value(x, -INPUT_SCALE.get(name), INPUT_SCALE.get(name)))
+            else:
+                df[name] = df[name].apply(lambda x: scale_value(x, 0.0, INPUT_SCALE.get(name)))
+
+        # For standard sin/cos
+        elif name.endswith('_sin') or name.endswith('_cos'):
             df[name] = df[name].apply(lambda x: scale_value(x, -1.0, 1.0))
-    # Scale the date
+
+    # Special handling for dates
     df[DATE] = df[DATE].apply(lambda x: scale_value(x.toordinal(), DATE_ORDINAL_LOWER_BOUND, DATE_ORDINAL_UPPER_BOUND))
+
     return df
 
 

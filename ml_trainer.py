@@ -18,7 +18,7 @@ from xlogger import log
 
 class HP:
     KERNEL_INITIALIZER = 'glorot_uniform'
-    OPTIMIZER = tf.keras.optimizers.Nadam()
+    OPTIMIZER = tf.keras.optimizers.RMSprop()
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()
     LAYER_SIZE = 200  # 200
@@ -28,7 +28,7 @@ class HP:
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
     DAYS_FOR_VALIDATION = 31  # 31
     DAYS_FOR_TEST = 14  # 14
-    TRAINING_EPOCHS = 20
+    TRAINING_EPOCHS = 1000
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
     EARLY_STOPPING_PATIENCE = 100
@@ -118,9 +118,9 @@ def train(model_name: str):
     loss_train = history.history['loss'][best_epoch]
     loss_validation = history.history['val_loss'][best_epoch]
     loss_test = model.evaluate(test_x, test_y)
-    log('loss, training:', loss_train)
-    log('loss, validation:', loss_validation)
-    log('loss, test:', loss_test)
+    log(f"loss, training:{loss_train}")
+    log(f"loss, validation: {loss_validation}")
+    log(f"loss, test: {loss_test}")
 
     for i in range(0, 100):
         tx = train_x.iloc[i]

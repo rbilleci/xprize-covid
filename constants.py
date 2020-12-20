@@ -39,22 +39,70 @@ H3 = "H3_Contact tracing"
 H6 = "H6_Facial Coverings"
 PREDICTED_NEW_CASES = 'PredictedDailyNewCases'
 
-INPUT_SCALE = {C1: 3.0,
-               C2: 3.0,
-               C3: 2.0,
-               C4: 4.0,
-               C5: 2.0,
-               C6: 3.0,
-               C7: 2.0,
-               C8: 4.0,
-               H1: 2.0,
-               H2: 3.0,
-               H3: 2.0,
-               H6: 4.0,
-               CONFIRMED_CASES: 1e8,  # 100 million
-               CONFIRMED_DEATHS: 1e7,  # 10 million
-               PREDICTED_NEW_CASES: LABEL_SCALING
-               }
+SUFFIX_MA = "_ma"
+SUFFIX_MA_DIFF = SUFFIX_MA + "_diff"
+
+COVID_INCUBATION_PERIOD = 5  # TODO: hyper-parameter
+MOVING_AVERAGE_SPAN = 7  # TODO: hyper-parameter
+
+INPUT_SCALE = {
+    # C1
+    C1: 3.0,
+    C1 + SUFFIX_MA: 3.0,
+    C1 + SUFFIX_MA_DIFF: 3.0,
+    # C2
+    C2: 3.0,
+    C2 + SUFFIX_MA: 3.0,
+    C2 + SUFFIX_MA_DIFF: 3.0,
+    # C3
+    C3: 2.0,
+    C3 + SUFFIX_MA: 2.0,
+    C3 + SUFFIX_MA_DIFF: 2.0,
+    # C4
+    C4: 4.0,
+    C4 + SUFFIX_MA: 4.0,
+    C4 + SUFFIX_MA_DIFF: 4.0,
+    # C5
+    C5: 2.0,
+    C5 + SUFFIX_MA: 2.0,
+    C5 + SUFFIX_MA_DIFF: 2.0,
+    # C6
+    C6: 3.0,
+    C6 + SUFFIX_MA: 3.0,
+    C6 + SUFFIX_MA_DIFF: 3.0,
+    # C7
+    C7: 2.0,
+    C7 + SUFFIX_MA: 2.0,
+    C7 + SUFFIX_MA_DIFF: 2.0,
+    # C8
+    C8: 4.0,
+    C8 + SUFFIX_MA: 4.0,
+    C8 + SUFFIX_MA_DIFF: 4.0,
+    # H1
+    H1: 2.0,
+    H1 + SUFFIX_MA: 2.0,
+    H1 + SUFFIX_MA_DIFF: 2.0,
+    # H2
+    H2: 3.0,
+    H2 + SUFFIX_MA: 3.0,
+    H2 + SUFFIX_MA_DIFF: 3.0,
+    # H3
+    H3: 2.0,
+    H3 + SUFFIX_MA: 2.0,
+    H3 + SUFFIX_MA_DIFF: 2.0,
+    # H6
+    H6: 4.0,
+    H6 + SUFFIX_MA: 4.0,
+    H6 + SUFFIX_MA_DIFF: 4.0,
+    # CONFIRMED CASES
+    CONFIRMED_CASES: 1e8,  # 100 million
+    CONFIRMED_CASES + SUFFIX_MA: 1e8,  # 100 million
+    CONFIRMED_CASES + SUFFIX_MA_DIFF: 1e8 / 10.0,  # divide by 10 for the diff
+    # NEW CASES
+    PREDICTED_NEW_CASES: LABEL_SCALING,
+    PREDICTED_NEW_CASES + SUFFIX_MA: LABEL_SCALING,
+    PREDICTED_NEW_CASES + SUFFIX_MA_DIFF: LABEL_SCALING / 10.0  # divide by 10 for the diff
+}
 # For training data
 
 
