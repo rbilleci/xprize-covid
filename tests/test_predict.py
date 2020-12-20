@@ -27,7 +27,7 @@ class TestPredict(unittest.TestCase):
         # self.predict_for_range("2020-12-31", "2021-01-01")
         # test the range we will use for the challenge
         self.predict_for_range("2020-12-22", "2021-06-19")
-        self.predict_for_range("2020-12-22", "2021-12-31")
+        # self.predict_for_range("2020-12-22", "2021-12-31")
 
     @staticmethod
     def predict_for_range(start_date, end_date):

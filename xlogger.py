@@ -1,9 +1,9 @@
 import datetime
-import logging as log
+from logging import basicConfig, warning, INFO
 
-log.basicConfig(filename='predict.log', level=log.INFO, format='%(asctime)s\t%(levelname)s\t%(filename)s\t%(message)s')
+basicConfig(filename='predict.log', level=INFO, format='%(asctime)s\t%(levelname)s\t%(filename)s\t%(message)s')
 
 
 def log(m):
-    log.warning(m)
+    warning(m)
     print(f"{datetime.datetime.now()} {m}")
