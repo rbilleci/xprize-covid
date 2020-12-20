@@ -27,8 +27,8 @@ class HP:
     LAYER_DROPOUT_RATE = 0.25
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
     DAYS_FOR_VALIDATION = 31  # 31
-    DAYS_FOR_TEST = 14  # 14
-    TRAINING_EPOCHS = 1000
+    DAYS_FOR_TEST = 7  # 14
+    TRAINING_EPOCHS = 20
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
     EARLY_STOPPING_PATIENCE = 100
@@ -75,7 +75,7 @@ def get_model_lrelu(model, dimensions) -> None:
 
 def get_model(dimensions):
     model = Sequential()
-    get_model_prelu(model, dimensions)
+    get_model_elu(model, dimensions)
     model.add(Dense(1, kernel_initializer=HP.KERNEL_INITIALIZER, activation=HP.OUTPUT_ACTIVATION))
     model.compile(loss=HP.LOSS, optimizer=HP.OPTIMIZER, metrics=HP.METRICS)
     model.summary()
@@ -91,7 +91,7 @@ def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Da
     df_val = ml_transformer.transform(df_val, for_prediction=False)
     df_test = ml_transformer.transform(df_test, for_prediction=False)
 
-    # TODO: check if we can skip this randomization step
+    # sample
     tr = df_train.sample(frac=1).reset_index(drop=True)
     val = df_val.sample(frac=1).reset_index(drop=True)
     test = df_test.sample(frac=1).reset_index(drop=True)

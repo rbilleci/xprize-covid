@@ -1,4 +1,6 @@
 import pandas as pd
+
+import datasets_additional_info
 import oxford_loader
 from constants import *
 from xlogger import log
@@ -7,27 +9,23 @@ from datetime import date, timedelta
 
 def load_ml_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     df = oxford_loader.load(PATH_DATA_BASELINE)
-    df = clean_data(df)
-    df = add_moving_averages(df)
+    df = filter_out_early_data(df)
+    df = prepare_data(df)
     df = truncate_last_day(df)  # for training only, since we don't have the new cases for the final day
-    return df.sort_values(DATE)
+    return df
 
 
 def load_prediction_data(path_future_data: str, end_date: date) -> pd.DataFrame:
     df = oxford_loader.load(PATH_DATA_BASELINE)
     df = add_npis(df, path_future_data)
     df = add_missing_dates(df, end_date)
-    df = clean_data(df)
-    df = add_moving_averages(df)
+    df = prepare_data(df)
     df[IS_SPECIALTY] = 0
-    return df.sort_values(DATE)
-
-
-def clean_data(df: pd.DataFrame) -> pd.DataFrame:
-    df = mark_null_columns(df)
-    df = impute(df)
-    df = compute_label(df)
     return df
+
+
+def filter_out_early_data(df: pd.DataFrame):
+    return df[(df[DATE] >= pd.to_datetime(TRAINING_DATA_START_DATE))]
 
 
 def add_npis(df: pd.DataFrame, path_future_data: str) -> pd.DataFrame:
@@ -61,23 +59,23 @@ def add_missing_dates(df: pd.DataFrame, end_date: date) -> pd.DataFrame:
     return df.append(pd.DataFrame.from_records(new_rows), ignore_index=True)
 
 
-def mark_null_columns(df: pd.DataFrame) -> pd.DataFrame:
-    log("marking null columns")
-    for name in COLUMNS_TO_APPLY_NULL_MARKER:
-        df[f"{name}_N"] = df[name].apply(lambda x: (1.0 if pd.isnull(x) else 0.0))
+def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
+    log("preparing data")
+    df = add_population_info(df)
+    df = df.sort_values(DATE).groupby(GEO_ID).apply(prepare_data_for_group).reset_index(drop=True)
+    df[CONFIRMED_CASES_PER_100K] = df[CONFIRMED_CASES] / df[POPULATION]
     return df
 
 
-def impute(df: pd.DataFrame) -> pd.DataFrame:
-    log("imputing")
-    return df.sort_values(DATE).groupby(GEO_ID).apply(impute_group).reset_index(drop=True)
+def prepare_data_for_group(group):
+    log(f"processing group {group.name}")
+    group = group.apply(impute)
+    group = label(group)
+    group = add_ma(group)
+    return group
 
 
-def impute_group(group):
-    return group.apply(impute_group_series)
-
-
-def impute_group_series(series: pd.Series):
+def impute(series: pd.Series) -> pd.Series:
     if series.dtype == 'float64':
         if pd.isnull(series.iloc[0]):  # set the initial row value to 0, if it is null
             series.iloc[0] = 0.0
@@ -86,13 +84,32 @@ def impute_group_series(series: pd.Series):
         return series
 
 
-def compute_label(df: pd.DataFrame) -> pd.DataFrame:
-    return df.sort_values(DATE).groupby(GEO_ID).apply(compute_label_for_group).reset_index(drop=True)
-
-
-def compute_label_for_group(group: pd.DataFrame) -> pd.DataFrame:
+def label(group):
     group[PREDICTED_NEW_CASES] = group[CONFIRMED_CASES].diff(-1).fillna(0.0).apply(lambda x: max(0, -x))
     return group
+
+
+def add_ma(group) -> pd.Series:
+    add_ma_for_series(group, group[C1], C1)
+    add_ma_for_series(group, group[C2], C2)
+    add_ma_for_series(group, group[C3], C3)
+    add_ma_for_series(group, group[C4], C4)
+    add_ma_for_series(group, group[C5], C5)
+    add_ma_for_series(group, group[C6], C6)
+    add_ma_for_series(group, group[C7], C7)
+    add_ma_for_series(group, group[C8], C8)
+    add_ma_for_series(group, group[H1], H1)
+    add_ma_for_series(group, group[H2], H2)
+    add_ma_for_series(group, group[H3], H3)
+    add_ma_for_series(group, group[H6], H6)
+    add_ma_for_series(group, group[CONFIRMED_CASES], CONFIRMED_CASES)
+    return group
+
+
+def add_ma_for_series(group, series: pd.Series, name) -> None:
+    shifted_series = series.shift(COVID_INCUBATION_PERIOD)
+    group[name + SUFFIX_MA_DIFF] = shifted_series.diff().ewm(span=MOVING_AVERAGE_SPAN).mean()
+    group[name + SUFFIX_MA_DIFF] = group[name + SUFFIX_MA_DIFF].fillna(0.0)
 
 
 def truncate_last_day(df: pd.DataFrame) -> pd.DataFrame:
@@ -106,38 +123,10 @@ def date_range(start_date, end_date):
         yield start_date + timedelta(n)
 
 
-def add_moving_averages(df: pd.DataFrame) -> pd.DataFrame:
-    log("adding ewma")
-    return df.sort_values(DATE).groupby(GEO_ID).apply(add_moving_averages_group).reset_index(drop=True)
-
-
-def add_moving_averages_group(group):
-    return group.apply(lambda series: add_moving_averages_group_series(group, series))
-
-
-def add_moving_averages_group_series(group: pd.DataFrame, series: pd.Series) -> pd.Series:
-    add_moving_average_group_series_ma(group, group[C1], C1)
-    add_moving_average_group_series_ma(group, group[C2], C2)
-    add_moving_average_group_series_ma(group, group[C3], C3)
-    add_moving_average_group_series_ma(group, group[C4], C4)
-    add_moving_average_group_series_ma(group, group[C5], C5)
-    add_moving_average_group_series_ma(group, group[C6], C6)
-    add_moving_average_group_series_ma(group, group[C7], C7)
-    add_moving_average_group_series_ma(group, group[C8], C8)
-    add_moving_average_group_series_ma(group, group[H1], H1)
-    add_moving_average_group_series_ma(group, group[H2], H2)
-    add_moving_average_group_series_ma(group, group[H3], H3)
-    add_moving_average_group_series_ma(group, group[H6], H6)
-    add_moving_average_group_series_ma(group, group[CONFIRMED_CASES], CONFIRMED_CASES)
-    add_moving_average_group_series_ma(group, group[PREDICTED_NEW_CASES], PREDICTED_NEW_CASES)
-    return series
-
-
-def add_moving_average_group_series_ma(group: pd.DataFrame, series: pd.Series, name) -> None:
-    shifted_series = series.shift(COVID_INCUBATION_PERIOD)
-    # calculate the ewm
-    #  group[name + SUFFIX_MA] = shifted_series.ewm(span=MOVING_AVERAGE_SPAN).mean()
-    #   group[name + SUFFIX_MA] = group[name + SUFFIX_MA].fillna(0.0)
-    #    if name in [PREDICTED_NEW_CASES, CONFIRMED_CASES]:
-    group[name + SUFFIX_MA_DIFF] = shifted_series.diff().ewm(span=MOVING_AVERAGE_SPAN).mean()
-    group[name + SUFFIX_MA_DIFF] = group[name + SUFFIX_MA_DIFF].fillna(0.0)
+def add_population_info(df: pd.DataFrame) -> pd.DataFrame:
+    log("adding population info")
+    df[POPULATION] = df[GEO_ID].apply(
+        lambda x: datasets_additional_info.ADDITIONAL_DATA_GEO[x][POPULATION])
+    df[POPULATION_DENSITY] = df[GEO_ID].apply(
+        lambda x: datasets_additional_info.ADDITIONAL_DATA_GEO[x][POPULATION_DENSITY])
+    return df

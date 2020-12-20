@@ -32,18 +32,23 @@ C6 = "C6_Stay at home requirements"
 C7 = "C7_Restrictions on internal movement"
 C8 = "C8_International travel controls"
 CONFIRMED_CASES = "ConfirmedCases"
+CONFIRMED_CASES_PER_100K = "ConfirmedCasesPer100K"
 CONFIRMED_DEATHS = "ConfirmedDeaths"
 H1 = "H1_Public information campaigns"
 H2 = "H2_Testing policy"
 H3 = "H3_Contact tracing"
 H6 = "H6_Facial Coverings"
 PREDICTED_NEW_CASES = 'PredictedDailyNewCases'
+POPULATION_DENSITY = 'PopulationDensity'
+POPULATION = 'Population'
 
 SUFFIX_MA = "_ma"
 SUFFIX_MA_DIFF = SUFFIX_MA + "_diff"
 
 COVID_INCUBATION_PERIOD = 5  # TODO: hyper-parameter
 MOVING_AVERAGE_SPAN = 7  # TODO: hyper-parameter
+
+TRAINING_DATA_START_DATE = datetime.date(2020, 3, 1)  # don't train on earlier data
 
 INPUT_SCALE = {
     # C1
@@ -99,9 +104,10 @@ INPUT_SCALE = {
     CONFIRMED_CASES + SUFFIX_MA: 1e8,  # 100 million
     CONFIRMED_CASES + SUFFIX_MA_DIFF: 1e8 / 10.0,  # divide by 10 for the diff
     # NEW CASES
+    CONFIRMED_CASES_PER_100K: 1e5,
     PREDICTED_NEW_CASES: LABEL_SCALING,
-    PREDICTED_NEW_CASES + SUFFIX_MA: LABEL_SCALING,
-    PREDICTED_NEW_CASES + SUFFIX_MA_DIFF: LABEL_SCALING / 10.0  # divide by 10 for the diff
+    POPULATION: 1e10,
+    POPULATION_DENSITY: 1e5  # max 100K
 }
 # For training data
 
@@ -129,7 +135,7 @@ IS_WORKING_DAY_YESTERDAY = 'is_working_day_yesterday'
 IS_WORKING_DAY_TOMORROW = 'is_working_day_tomorrow'
 INDEX_COLUMNS = [COUNTRY_NAME, REGION_NAME, DATE]
 NPI_COLUMNS = [C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6]
-COLUMNS_TO_APPLY_NULL_MARKER = sorted([CONFIRMED_CASES])
+COLUMNS_TO_APPLY_NULL_MARKER = sorted([])  # don't use this for now
 IS_SPECIALTY = 'IsSpecialty'
 
 OUTPUT_COLUMNS = INDEX_COLUMNS + [PREDICTED_NEW_CASES, IS_SPECIALTY]
