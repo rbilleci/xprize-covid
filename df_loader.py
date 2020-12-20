@@ -13,33 +13,33 @@ def load_ml_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
 
 
 def load_prediction_data(path_future_data: str, end_date: date) -> pd.DataFrame:
-    log("loading reference data")
     df = oxford_loader.load(PATH_DATA_BASELINE)
-
-    log("adding rows for future dates")
-    df = add_future_rows(df, end_date)
-
-    log("adding data from npi file")
-    df = add_future_npi_data(df, path_future_data)
-
-    log("preparing dataset")
+    df = add_npis(df, path_future_data)
+    df = add_missing_dates(df, end_date)
     df = prepare_data(df)
     df[IS_SPECIALTY] = 0
     return df
 
 
 def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
-    log("adding null markers")
     df = mark_null_columns(df)
-    log("imputing")
     df = impute(df)
-    log("computing labels")
     df = compute_label(df)
     return df
 
 
-def add_future_rows(df: pd.DataFrame, end_date: date) -> pd.DataFrame:
-    # Add missing rows from start of time to end-date
+def add_npis(df: pd.DataFrame, path_future_data: str) -> pd.DataFrame:
+    # Load the NPI file and remove any entries AFTER the MAX date in our reference data
+    log("adding NPIs")
+    df_future_start_date = df[DATE].max()
+    df_future = oxford_loader.load(path_future_data)
+    df_future = df_future.loc[(df_future[DATE] > df_future_start_date)]
+    df = df.append(df_future, ignore_index=True).sort_values(DATE)
+    return df
+
+
+def add_missing_dates(df: pd.DataFrame, end_date: date) -> pd.DataFrame:
+    log(f"adding missing rows")
     df = df.set_index(INDEX_COLUMNS, drop=False)
     new_rows = []
     for _, geo in oxford_loader.df_geos.iterrows():
@@ -55,31 +55,19 @@ def add_future_rows(df: pd.DataFrame, end_date: date) -> pd.DataFrame:
                                  CONFIRMED_CASES: 0.0})
     df = df.reset_index(drop=True)
     # Merge the new rows with the existing data frame, and resort the results by date
+    log(f"filling in dataset with {len(new_rows)} rows")
     return df.append(pd.DataFrame.from_records(new_rows), ignore_index=True).sort_values(DATE)
 
 
-def add_future_npi_data(df: pd.DataFrame, path_future_data: str) -> pd.DataFrame:
-    # filter out older data from the npi file
-    df_future = oxford_loader.load(path_future_data)
-    df_future = df_future.loc[(df[DATE] >= pd.to_datetime(DATE_SUBMISSION_CUTOFF))]
-
-    df = df.set_index(INDEX_COLUMNS, drop=False)  # Add the index again :)
-    # for idx, f in df_future.iterrows():
-    #    idx_c = f[COUNTRY_NAME]
-    #    idx_r = f[REGION_NAME]
-    #    idx_d = f[DATE]
-    #    df.loc[df.index.isin([[idx_c, idx_r, idx_d]]), NPI_COLUMNS] = \
-    #        [f[C1], f[C2], f[C3], f[C4], f[C5], f[C6], f[C7], f[C8], f[H1], f[H2], f[H3], f[H6]]
-    return df.reset_index(drop=True).sort_values(DATE)  # drop the index again :)
-
-
 def mark_null_columns(df: pd.DataFrame) -> pd.DataFrame:
+    log("marking null columns")
     for name in COLUMNS_TO_APPLY_NULL_MARKER:
         df[f"{name}_N"] = df[name].apply(lambda x: (1.0 if pd.isnull(x) else 0.0))
     return df
 
 
 def impute(df: pd.DataFrame) -> pd.DataFrame:
+    log("imputing")
     return df.groupby(GEO_ID).apply(impute_group).reset_index(drop=True)
 
 
