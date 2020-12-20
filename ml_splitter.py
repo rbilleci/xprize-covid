@@ -25,3 +25,7 @@ def split(df: pd.DataFrame, days_for_validation: int, days_for_test: int) -> (pd
         raise Exception('entries do not add up')
 
     return df_train, df_validation, df_test
+
+
+def split_random(df: pd.DataFrame) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
+    return pd.np.split(df.sample(frac=1), [int(.6 * len(df)), int(.8 * len(df))])

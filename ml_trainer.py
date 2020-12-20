@@ -18,7 +18,7 @@ from xlogger import log
 
 class HP:
     KERNEL_INITIALIZER = 'glorot_uniform'
-    OPTIMIZER = tf.keras.optimizers.Nadam()  # RMS prop gets about 0.0160 after 100 iterations
+    OPTIMIZER = tf.keras.optimizers.Adadelta()  # RMS prop gets about 0.0160 after 100 iterations
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()
     LAYER_SIZE = 200  # 200
@@ -28,7 +28,7 @@ class HP:
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
     DAYS_FOR_VALIDATION = 31  # 31
     DAYS_FOR_TEST = 7  # 14
-    TRAINING_EPOCHS = 20
+    TRAINING_EPOCHS = 100
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
     EARLY_STOPPING_PATIENCE = 100
@@ -84,7 +84,8 @@ def get_model(dimensions):
 
 def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
     # load the data and perform the split
-    df_train, df_val, df_test = ml_splitter.split(load_ml_data(), HP.DAYS_FOR_VALIDATION, HP.DAYS_FOR_TEST)
+    # df_train, df_val, df_test = ml_splitter.split(load_ml_data(), HP.DAYS_FOR_VALIDATION, HP.DAYS_FOR_TEST)
+    df_train, df_val, df_test = ml_splitter.split_random(load_ml_data())
 
     # transform the data for the neural network
     df_train = ml_transformer.transform(df_train, for_prediction=False)
