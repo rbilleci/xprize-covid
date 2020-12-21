@@ -45,10 +45,10 @@ POPULATION = 'Population'
 SUFFIX_MA = "_ma"
 SUFFIX_MA_DIFF = SUFFIX_MA + "_diff"
 
-COVID_INCUBATION_PERIOD = 5  # TODO: hyper-parameter
-MOVING_AVERAGE_SPAN = 7  # TODO: hyper-parameter
+COVID_INCUBATION_PERIOD = 5
+MOVING_AVERAGE_SPAN = 14
 
-TRAINING_DATA_START_DATE = datetime.date(2020, 3, 1)  # don't train on earlier data
+TRAINING_DATA_START_DATE = datetime.date(2020, 2, 1)  # don't train on earlier data
 
 INPUT_SCALE = {
     # C1

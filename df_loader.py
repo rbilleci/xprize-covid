@@ -114,7 +114,7 @@ def add_ma(group) -> pd.Series:
 
 
 def add_ma_for_series(group, series: pd.Series, name) -> None:
-    shifted_series = series.shift(COVID_INCUBATION_PERIOD)
+    shifted_series = series  # series.shift(COVID_INCUBATION_PERIOD)
     group[name + SUFFIX_MA_DIFF] = shifted_series.diff().ewm(span=MOVING_AVERAGE_SPAN).mean()
     group[name + SUFFIX_MA_DIFF] = group[name + SUFFIX_MA_DIFF].fillna(0.0)
 

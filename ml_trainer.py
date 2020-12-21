@@ -18,7 +18,7 @@ from xlogger import log
 
 class HP:
     KERNEL_INITIALIZER = 'glorot_uniform'
-    OPTIMIZER = tf.keras.optimizers.SGD(lr=0.01, nesterov=True)
+    OPTIMIZER = tf.keras.optimizers.Adam()
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()
     LAYER_SIZE = 200  # 200
