@@ -1,5 +1,6 @@
 import datetime
 
+CALCULATE_PER_100K = True
 """
 When considering the date/time we start predicting from...
 
@@ -32,7 +33,6 @@ C6 = "C6_Stay at home requirements"
 C7 = "C7_Restrictions on internal movement"
 C8 = "C8_International travel controls"
 CONFIRMED_CASES = "ConfirmedCases"
-CONFIRMED_CASES_PER_100K = "ConfirmedCasesPer100K"
 CONFIRMED_DEATHS = "ConfirmedDeaths"
 H1 = "H1_Public information campaigns"
 H2 = "H2_Testing policy"
@@ -101,10 +101,7 @@ INPUT_SCALE = {
     H6 + SUFFIX_MA_DIFF: 4.0,
     # CONFIRMED CASES
     CONFIRMED_CASES: 1e8,  # 100 million
-    CONFIRMED_CASES + SUFFIX_MA: 1e8,  # 100 million
-    CONFIRMED_CASES + SUFFIX_MA_DIFF: 1e8 / 10.0,  # divide by 10 for the diff
     # NEW CASES
-    CONFIRMED_CASES_PER_100K: 1e5,
     PREDICTED_NEW_CASES: LABEL_SCALING,
     POPULATION: 1e10,
     POPULATION_DENSITY: 1e5  # max 100K

@@ -1,5 +1,7 @@
 import os
 from datetime import date
+
+from datasets_additional_info import ADDITIONAL_DATA_GEO
 from xlogger import log
 import keras.models as km
 import pandas as pd
@@ -65,7 +67,6 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
             group,
             new_cases,
             confirmed_cases)).sort_values([COUNTRY_NAME, REGION_NAME, DATE])
-    df.info()
 
     # save it baby!
     write_predictions(start_date, end_date, df, path_output_file)
@@ -88,7 +89,11 @@ def predict_day(model: Model,
     idx = 0
     for _, row in df_group.iterrows():  # we need to map the geo_id to the index in the predictions
         geo_id = row[GEO_ID]
-        value = model_predictions[idx][0] * LABEL_SCALING
+        value = model_predictions[idx][0]
+        if CALCULATE_PER_100K:
+            value = value * ADDITIONAL_DATA_GEO[geo_id][POPULATION]  # since we scaled by 1e5, we can remove the divisor
+        else:
+            value = value * LABEL_SCALING
         new_cases[geo_id] = value
         confirmed_cases[geo_id] += value
         idx = idx + 1

@@ -3,6 +3,7 @@ import pandas as pd
 import datasets_additional_info
 import oxford_loader
 from constants import *
+from datasets_additional_info import ADDITIONAL_DATA_GEO
 from xlogger import log
 from datetime import date, timedelta
 
@@ -63,14 +64,16 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     log("preparing data")
     df = add_population_info(df)
     df = df.sort_values(DATE).groupby(GEO_ID).apply(prepare_data_for_group).reset_index(drop=True)
-    df[CONFIRMED_CASES_PER_100K] = df[CONFIRMED_CASES] / df[POPULATION]
+    # TODO:, we can't use this until it is added into the predictor
+    # df[CONFIRMED_CASES_PER_100K] = df[CONFIRMED_CASES] / df[POPULATION]
     return df
 
 
 def prepare_data_for_group(group):
-    log(f"processing group {group.name}")
+    name = group.name
+    log(f"processing group {name}")
     group = group.apply(impute)
-    group = label(group)
+    group = label(group, name)
     group = add_ma(group)
     return group
 
@@ -84,8 +87,11 @@ def impute(series: pd.Series) -> pd.Series:
         return series
 
 
-def label(group):
+def label(group, name):
     group[PREDICTED_NEW_CASES] = group[CONFIRMED_CASES].diff(-1).fillna(0.0).apply(lambda x: max(0, -x))
+    if CALCULATE_PER_100K:  # compute new cases per 100K population
+        group[PREDICTED_NEW_CASES] = group[PREDICTED_NEW_CASES].apply(
+            lambda value: 1e5 * value / ADDITIONAL_DATA_GEO[name][POPULATION])
     return group
 
 
@@ -102,7 +108,8 @@ def add_ma(group) -> pd.Series:
     add_ma_for_series(group, group[H2], H2)
     add_ma_for_series(group, group[H3], H3)
     add_ma_for_series(group, group[H6], H6)
-    add_ma_for_series(group, group[CONFIRMED_CASES], CONFIRMED_CASES)
+    # TODO:, we can't use this until it is added into the predictor
+    # add_ma_for_series(group, group[CONFIRMED_CASES], CONFIRMED_CASES)
     return group
 
 

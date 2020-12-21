@@ -18,7 +18,7 @@ from xlogger import log
 
 class HP:
     KERNEL_INITIALIZER = 'glorot_uniform'
-    OPTIMIZER = tf.keras.optimizers.Adadelta()  # RMS prop gets about 0.0160 after 100 iterations
+    OPTIMIZER = tf.keras.optimizers.SGD(lr=0.01, nesterov=True)
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()
     LAYER_SIZE = 200  # 200
@@ -27,7 +27,7 @@ class HP:
     LAYER_DROPOUT_RATE = 0.25
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
     DAYS_FOR_VALIDATION = 31  # 31
-    DAYS_FOR_TEST = 7  # 14
+    DAYS_FOR_TEST = 10  # 14
     TRAINING_EPOCHS = 100
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
@@ -75,7 +75,7 @@ def get_model_lrelu(model, dimensions) -> None:
 
 def get_model(dimensions):
     model = Sequential()
-    get_model_elu(model, dimensions)
+    get_model_prelu(model, dimensions)
     model.add(Dense(1, kernel_initializer=HP.KERNEL_INITIALIZER, activation=HP.OUTPUT_ACTIVATION))
     model.compile(loss=HP.LOSS, optimizer=HP.OPTIMIZER, metrics=HP.METRICS)
     model.summary()
@@ -84,8 +84,9 @@ def get_model(dimensions):
 
 def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
     # load the data and perform the split
-    # df_train, df_val, df_test = ml_splitter.split(load_ml_data(), HP.DAYS_FOR_VALIDATION, HP.DAYS_FOR_TEST)
-    df_train, df_val, df_test = ml_splitter.split_random(load_ml_data())
+    df_train, df_val, df_test = ml_splitter.split(load_ml_data(), HP.DAYS_FOR_VALIDATION, HP.DAYS_FOR_TEST)
+    # df_train, df_val, df_test = ml_splitter.split_random(load_ml_data())
+    # df_train, df_val, df_test = ml_splitter.split_random_with_reserved_test(load_ml_data(), HP.DAYS_FOR_TEST)
 
     # transform the data for the neural network
     df_train = ml_transformer.transform(df_train, for_prediction=False)
@@ -123,11 +124,13 @@ def train(model_name: str):
     log(f"loss, validation: {loss_validation}")
     log(f"loss, test: {loss_test}")
 
-    for i in range(0, 100):
-        tx = train_x.iloc[i]
-        ty = train_y.iloc[i]
-        log(f"{model.predict(np.array([tx]))[0][0] * LABEL_SCALING}\t\t{LABEL_SCALING * ty[PREDICTED_NEW_CASES]}")
-
+    for i in range(0, 20):
+        tx = test_x.iloc[i]
+        ty = test_y.iloc[i]
+        if CALCULATE_PER_100K:
+            log(f"{model.predict(np.array([tx]))[0][0] * 1e5}\t\t{1e5 * ty[PREDICTED_NEW_CASES]}")
+        else:
+            log(f"{model.predict(np.array([tx]))[0][0] * LABEL_SCALING}\t\t{LABEL_SCALING * ty[PREDICTED_NEW_CASES]}")
     save(model, model_name)
 
 

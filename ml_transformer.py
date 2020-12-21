@@ -45,7 +45,9 @@ def transform_value_scale(df: pd.DataFrame) -> pd.DataFrame:
 
         # Standard NPI data
         if name in INPUT_SCALE.keys():
-            if name.endswith(SUFFIX_MA_DIFF):
+            if CALCULATE_PER_100K and name == PREDICTED_NEW_CASES:
+                df[name] = df[name].apply(lambda x: scale_value(x, 0.0, 1e5))
+            elif name.endswith(SUFFIX_MA_DIFF):
                 df[name] = df[name].apply(lambda x: scale_value(x, -INPUT_SCALE.get(name), INPUT_SCALE.get(name)))
             else:
                 df[name] = df[name].apply(lambda x: scale_value(x, 0.0, INPUT_SCALE.get(name)))
