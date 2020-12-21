@@ -12,10 +12,10 @@ from xlogger import log
 
 class HP:
     KERNEL_INITIALIZER = 'random_normal'  # 'random_normal'
-    OPTIMIZER = tf.keras.optimizers.Adadelta()
+    OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.0001)#)
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()  # 'log_cosh'
-    LAYER_SIZE = 500  # 200
+    LAYER_SIZE = 200  # 200
     LAYERS = 2  # 2
     LAYER_DROPOUT = False
     LAYER_DROPOUT_RATE = 0.25
@@ -26,7 +26,7 @@ class HP:
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
     EARLY_STOPPING_PATIENCE = 100
-    CALLBACKS = [EarlyStopping(patience=EARLY_STOPPING_PATIENCE, restore_best_weights=True)]
+    CALLBACKS = []#EarlyStopping(patience=EARLY_STOPPING_PATIENCE, restore_best_weights=True)]
 
 
 def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
@@ -88,7 +88,7 @@ def get_model_lrelu(model, dimensions) -> None:
 
 def get_model(dimensions):
     model = Sequential()
-    get_model_relu(model, dimensions)
+    get_model_prelu(model, dimensions)
     model.add(Dense(1, kernel_initializer=HP.KERNEL_INITIALIZER, activation=HP.OUTPUT_ACTIVATION))
     model.compile(loss=HP.LOSS, optimizer=HP.OPTIMIZER, metrics=HP.METRICS)
     model.summary()
