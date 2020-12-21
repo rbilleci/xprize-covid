@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+
+import constants
 import ml_splitter
 import ml_transformer
 
@@ -17,10 +19,10 @@ from xlogger import log
 
 
 class HP:
-    KERNEL_INITIALIZER = 'glorot_uniform'
-    OPTIMIZER = tf.keras.optimizers.Adam()
+    KERNEL_INITIALIZER = 'random_normal'  # 'random_normal'
+    OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.0001)
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
-    LOSS = tf.keras.losses.MeanSquaredError()
+    LOSS = tf.keras.losses.MeanSquaredError()  # 'log_cosh'
     LAYER_SIZE = 200  # 200
     LAYERS = 2  # 2
     LAYER_DROPOUT = False
@@ -28,7 +30,7 @@ class HP:
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
     DAYS_FOR_VALIDATION = 31  # 31
     DAYS_FOR_TEST = 10  # 14
-    TRAINING_EPOCHS = 100
+    TRAINING_EPOCHS = 20
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
     EARLY_STOPPING_PATIENCE = 100
@@ -75,7 +77,7 @@ def get_model_lrelu(model, dimensions) -> None:
 
 def get_model(dimensions):
     model = Sequential()
-    get_model_prelu(model, dimensions)
+    get_model_elu(model, dimensions)
     model.add(Dense(1, kernel_initializer=HP.KERNEL_INITIALIZER, activation=HP.OUTPUT_ACTIVATION))
     model.compile(loss=HP.LOSS, optimizer=HP.OPTIMIZER, metrics=HP.METRICS)
     model.summary()
@@ -89,14 +91,10 @@ def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Da
     # df_train, df_val, df_test = ml_splitter.split_random_with_reserved_test(load_ml_data(), HP.DAYS_FOR_TEST)
 
     # transform the data for the neural network
-    df_train = ml_transformer.transform(df_train, for_prediction=False)
-    df_val = ml_transformer.transform(df_val, for_prediction=False)
-    df_test = ml_transformer.transform(df_test, for_prediction=False)
+    tr = ml_transformer.transform(df_train, for_prediction=False).sample(frac=1).reset_index(drop=True)
+    val = ml_transformer.transform(df_val, for_prediction=False).sample(frac=1).reset_index(drop=True)
+    test = ml_transformer.transform(df_test, for_prediction=False).sample(frac=1).reset_index(drop=True)
 
-    # sample
-    tr = df_train.sample(frac=1).reset_index(drop=True)
-    val = df_val.sample(frac=1).reset_index(drop=True)
-    test = df_test.sample(frac=1).reset_index(drop=True)
     return tr.iloc[:, 1:], tr.iloc[:, :1], val.iloc[:, 1:], val.iloc[:, :1], test.iloc[:, 1:], test.iloc[:, :1]
 
 
@@ -107,6 +105,7 @@ def save(model, model_name: str):
 
 def train(model_name: str):
     train_x, train_y, validation_x, validation_y, test_x, test_y = get_data()
+
     model = get_model(train_x.shape[1])
     history = model.fit(train_x,
                         train_y,
@@ -125,12 +124,18 @@ def train(model_name: str):
     log(f"loss, test: {loss_test}")
 
     for i in range(0, 20):
-        tx = test_x.iloc[i]
-        ty = test_y.iloc[i]
-        if CALCULATE_PER_100K:
-            log(f"{model.predict(np.array([tx]))[0][0] * 1e5}\t\t{1e5 * ty[PREDICTED_NEW_CASES]}")
-        else:
-            log(f"{model.predict(np.array([tx]))[0][0] * LABEL_SCALING}\t\t{LABEL_SCALING * ty[PREDICTED_NEW_CASES]}")
+        # expected value
+        df_output = test_y.iloc[i]
+        expected = df_output[PREDICTED_NEW_CASES]
+
+        # predicted value
+        df_input = test_x.iloc[i]
+        predicted = model.predict(np.array([df_input]))[0][0]
+
+        # perform scaling
+        expected = expected * constants.INPUT_SCALE[PREDICTED_NEW_CASES]
+        predicted = predicted * constants.INPUT_SCALE[PREDICTED_NEW_CASES]
+        log(f"EXPECTED/PREDICTED:\t{expected} vs {predicted}")
     save(model, model_name)
 
 

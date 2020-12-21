@@ -1,15 +1,16 @@
 import os
 from datetime import date
+from statistics import mean
 
-from datasets_additional_info import ADDITIONAL_DATA_GEO
-from xlogger import log
 import keras.models as km
 import pandas as pd
 from tensorflow.python.keras.models import Model
+
 import df_loader
 import ml_transformer
 from constants import *
 from oxford_loader import df_geos
+from xlogger import log
 
 
 def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_output_file: str) -> None:
@@ -36,25 +37,38 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
         This is calculated when the data is loaded
     """
     df = df_loader.load_prediction_data(path_future_data, end_date)
-    new_cases = {}
+    predicted_cases = {}
+    predicted_cases_ma = {}
     confirmed_cases = {}
+    confirmed_cases_ma = {}
 
     for _, geo in df_geos.iterrows():
         geo_id = geo[GEO_ID]
+
+        # init confirmed cases for geo
+        confirmed_cases[geo_id] = 0
+        confirmed_cases_ma[geo_id] = []
+
+        # init predicated cases for geo
+        predicted_cases[geo_id] = 0
+        predicted_cases_ma[geo_id] = []
+
+        # try to find the most recent value for the geo
         result = df[(df[GEO_ID] == geo_id) &
                     (df[DATE] <= pd.to_datetime(DATE_SUBMISSION_CUTOFF)) &
                     # for an index of -1, the date will be the 22nd: there will be no confirmed cases
                     # for an index of -2, the date will be the 21st: there will be cases, but nothing to predict
                     # for an index of -3, the date will be the 20th: there will be cases, and a prediction
                     (df[CONFIRMED_CASES] > 0)].iloc[-3]
-        if result is None:
-            log(f"no reference data found for {geo_id}")
-            confirmed_cases[geo_id] = 0
-            new_cases[geo_id] = 0
-        else:
-            log(f"{geo_id}:  confirmed = [{result[CONFIRMED_CASES]}], new = [{result[PREDICTED_NEW_CASES]}]")
+
+        if result is not None:
+            log(f"{geo_id}: "f"confirmed = {result[CONFIRMED_CASES]}, "f"new = {result[PREDICTED_NEW_CASES]}")
+            # confirmed
             confirmed_cases[geo_id] = result[CONFIRMED_CASES]
-            new_cases[geo_id] = result[PREDICTED_NEW_CASES]
+            confirmed_cases_ma[geo_id].insert(0, result[CONFIRMED_CASES_MA_B])
+            # predicted
+            predicted_cases[geo_id] = result[PREDICTED_NEW_CASES]
+            predicted_cases_ma[geo_id].insert(0, result[PREDICTED_NEW_CASES_MA_B])
 
     # load our model
     model = load_model(PREDICTED_NEW_CASES)
@@ -65,8 +79,10 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
         lambda group: predict_day(
             model,
             group,
-            new_cases,
-            confirmed_cases)).sort_values([COUNTRY_NAME, REGION_NAME, DATE])
+            predicted_cases,
+            predicted_cases_ma,
+            confirmed_cases,
+            confirmed_cases_ma)).sort_values([COUNTRY_NAME, REGION_NAME, DATE])
 
     # save it baby!
     write_predictions(start_date, end_date, df, path_output_file)
@@ -74,32 +90,47 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
 
 def predict_day(model: Model,
                 df_group: pd.DataFrame,
-                new_cases,
-                confirmed_cases) -> pd.DataFrame:
+                predicted_cases,
+                predicted_cases_ma,
+                confirmed_cases,
+                confirmed_cases_ma) -> pd.DataFrame:
     log(f"predicting for {df_group[DATE].iloc[0]}")
 
     # Apply the previous day's prediction and confirmed cases to the current day
-    df_group[CONFIRMED_CASES] = df_group[GEO_ID].apply(lambda x: confirmed_cases[x] + new_cases[x])
+    df_group[CONFIRMED_CASES] = df_group[GEO_ID].apply(lambda x: confirmed_cases[x] + predicted_cases[x])
+
+    # Update the moving window calculations, with results from the previous day
+    df_group[CONFIRMED_CASES_MA_A] = df_group[GEO_ID].apply(lambda x: mean(confirmed_cases_ma[x][0:MA_WINDOW_A]))
+    df_group[CONFIRMED_CASES_MA_B] = df_group[GEO_ID].apply(lambda x: mean(confirmed_cases_ma[x][0:MA_WINDOW_B]))
+    df_group[CONFIRMED_CASES_MA_C] = df_group[GEO_ID].apply(lambda x: mean(confirmed_cases_ma[x][0:MA_WINDOW_C]))
+    df_group[PREDICTED_NEW_CASES_MA_A] = df_group[GEO_ID].apply(lambda x: mean(predicted_cases_ma[x][0:MA_WINDOW_A]))
+    df_group[PREDICTED_NEW_CASES_MA_B] = df_group[GEO_ID].apply(lambda x: mean(predicted_cases_ma[x][0:MA_WINDOW_B]))
+    df_group[PREDICTED_NEW_CASES_MA_C] = df_group[GEO_ID].apply(lambda x: mean(predicted_cases_ma[x][0:MA_WINDOW_C]))
 
     # Calculate the next predictions!, perform a batch transformation of the full day records
-    df_transformed = ml_transformer.transform(df_group.copy())
-    model_predictions = model.predict(df_transformed)
+    model_predictions = model.predict(ml_transformer.transform(df_group.copy()))
 
     # Apply the predicted values back on the dataset
     idx = 0
     for _, row in df_group.iterrows():  # we need to map the geo_id to the index in the predictions
         geo_id = row[GEO_ID]
-        value = model_predictions[idx][0]
-        if CALCULATE_PER_100K:
-            value = value * ADDITIONAL_DATA_GEO[geo_id][POPULATION]  # since we scaled by 1e5, we can remove the divisor
-        else:
-            value = value * LABEL_SCALING
-        new_cases[geo_id] = value
-        confirmed_cases[geo_id] += value
+        predicted_value = model_predictions[idx][0] * INPUT_SCALE[PREDICTED_NEW_CASES]
+        # update the predicted cases
+        predicted_cases[geo_id] = predicted_value
+        predicted_cases_ma[geo_id].insert(0, predicted_value)
+        # update the confirmed cases
+        confirmed_cases[geo_id] += predicted_value
+        confirmed_cases_ma[geo_id].insert(0, confirmed_cases[geo_id])
+        # only keep N elements in our list
+        if len(confirmed_cases_ma[geo_id]) > MA_WINDOW_C:
+            confirmed_cases_ma[geo_id].pop()
+        if len(predicted_cases_ma[geo_id]) > MA_WINDOW_C:
+            predicted_cases_ma[geo_id].pop()
+        # update our index, and loop to the next prediction
         idx = idx + 1
 
-    # Apply the predicted cases to the date
-    df_group[PREDICTED_NEW_CASES] = df_group[GEO_ID].apply(lambda x: new_cases[x])
+    # Apply the predicted cases to the date, this will be in the final output
+    df_group[PREDICTED_NEW_CASES] = df_group[GEO_ID].apply(lambda x: predicted_cases[x])
 
     return df_group
 

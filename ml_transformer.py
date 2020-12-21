@@ -39,26 +39,30 @@ def transform_country(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def transform_value_scale(df: pd.DataFrame) -> pd.DataFrame:
-    # Scale Standard Numeric Values
-    for e in df.items():
-        name, series = str(e[0]), e[1]
+    for name in df:
 
-        # Standard NPI data
-        if name in INPUT_SCALE.keys():
-            if CALCULATE_PER_100K and name == PREDICTED_NEW_CASES:
-                df[name] = df[name].apply(lambda x: scale_value(x, 0.0, 1e5))
-            elif name.endswith(SUFFIX_MA_DIFF):
-                df[name] = df[name].apply(lambda x: scale_value(x, -INPUT_SCALE.get(name), INPUT_SCALE.get(name)))
-            else:
-                df[name] = df[name].apply(lambda x: scale_value(x, 0.0, INPUT_SCALE.get(name)))
+        # assert that we are only handling allowed input
+        if name in [GEO_ID, COUNTRY_NAME, REGION_NAME, DATE, CONTINENT, DAY_OF_WEEK,
+                    IS_WORKING_DAY_TOMORROW, IS_WORKING_DAY_YESTERDAY, IS_WORKING_DAY_TODAY,
+                    IS_SPECIALTY]:
+            continue
 
-        # For standard sin/cos
-        elif name.endswith('_sin') or name.endswith('_cos'):
+        # handle values between -1 and 1
+        elif name in [DAY_OF_WEEK_COS, DAY_OF_WEEK_SIN,
+                      DAY_OF_MONTH_COS, DAY_OF_MONTH_SIN, DAY_OF_YEAR_COS, DAY_OF_YEAR_SIN]:
             df[name] = df[name].apply(lambda x: scale_value(x, -1.0, 1.0))
 
-    # Special handling for dates
-    df[DATE] = df[DATE].apply(lambda x: scale_value(x.toordinal(), DATE_ORDINAL_LOWER_BOUND, DATE_ORDINAL_UPPER_BOUND))
+        # raise an error, it means there is unexpected input
+        elif name not in INPUT_SCALE.keys():
+            raise KeyError(name)
 
+        # handle the scaling
+        elif name in INPUT_SCALE.keys():
+            df[name] = df[name].apply(lambda x: scale_value(x, 0.0, INPUT_SCALE[name]))
+        else:
+            raise KeyError(f"oops! {name}")
+
+    df[DATE] = df[DATE].apply(lambda x: scale_value(x.toordinal(), DATE_ORDINAL_LOWER_BOUND, DATE_ORDINAL_UPPER_BOUND))
     return df
 
 
@@ -71,7 +75,7 @@ def transform_encoding(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# TODO: factory out, or may multiple encoding functions
+# TODO: factor out, or may multiple encoding functions
 def ohe(df: pd.DataFrame, column: str, values) -> pd.DataFrame:
     df = df.join(pd.get_dummies(df[column], prefix=column, dtype=np.float64))
     for value in values:

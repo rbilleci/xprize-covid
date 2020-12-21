@@ -1,9 +1,8 @@
 import pandas as pd
 
-import datasets_additional_info
+from datasets_additional_info import *
 import oxford_loader
 from constants import *
-from datasets_additional_info import ADDITIONAL_DATA_GEO
 from xlogger import log
 from datetime import date, timedelta
 
@@ -62,61 +61,69 @@ def add_missing_dates(df: pd.DataFrame, end_date: date) -> pd.DataFrame:
 
 def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     log("preparing data")
-    df = add_population_info(df)
-    df = df.sort_values(DATE).groupby(GEO_ID).apply(prepare_data_for_group).reset_index(drop=True)
-    # TODO:, we can't use this until it is added into the predictor
-    # df[CONFIRMED_CASES_PER_100K] = df[CONFIRMED_CASES] / df[POPULATION]
+    df = df.sort_values(DATE)
+
+    # Add population info
+    df[POPULATION] = df[GEO_ID].apply(lambda geo_id: ADDITIONAL_DATA_GEO[geo_id][POPULATION])
+    df[POPULATION_DENSITY] = df[GEO_ID].apply(lambda geo_id: ADDITIONAL_DATA_GEO[geo_id][POPULATION_DENSITY])
+    df = df.groupby(GEO_ID).apply(group_impute).reset_index(drop=True)
+    df = df.groupby(GEO_ID).apply(group_label).reset_index(drop=True)
+
+    # Add Moving Averages for confirmed cases
+    df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_a(group, CONFIRMED_CASES)).reset_index(drop=True)
+    df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_b(group, CONFIRMED_CASES)).reset_index(drop=True)
+    df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_c(group, CONFIRMED_CASES)).reset_index(drop=True)
+
+    # Add Moving Averages for confirmed cases
+    df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_a(group, PREDICTED_NEW_CASES)).reset_index(drop=True)
+    df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_b(group, PREDICTED_NEW_CASES)).reset_index(drop=True)
+    df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_c(group, PREDICTED_NEW_CASES)).reset_index(drop=True)
+
+    # Add npi column moving averages
+    for column in NPI_COLUMNS:
+        df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_a(group, column)).reset_index(drop=True)
+        df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_b(group, column)).reset_index(drop=True)
+        df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_c(group, column)).reset_index(drop=True)
+    # drop redundant input
+    df = df.drop([C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6], axis=1)
     return df
 
 
-def prepare_data_for_group(group):
-    name = group.name
-    log(f"processing group {name}")
-    group = group.apply(impute)
-    group = label(group, name)
-    group = add_ma(group)
-    return group
+def group_impute(grouped):
+    for series_name in grouped:
+        series = grouped[series_name]
+        if series.dtype == 'float64':
+            if pd.isnull(series.iloc[0]):  # set the initial row value to 0, if it is null
+                series.iloc[0] = 0.0
+            grouped[series.name] = series.ffill()
+    return grouped
 
 
-def impute(series: pd.Series) -> pd.Series:
-    if series.dtype == 'float64':
-        if pd.isnull(series.iloc[0]):  # set the initial row value to 0, if it is null
-            series.iloc[0] = 0.0
-        return series.ffill()
-    else:
-        return series
+def group_label(grouped):
+    grouped[PREDICTED_NEW_CASES] = grouped[CONFIRMED_CASES].copy()
+    grouped[PREDICTED_NEW_CASES] = grouped[PREDICTED_NEW_CASES].diff(-1).fillna(0.0).apply(lambda x: max(0, -x))
+    return grouped
 
 
-def label(group, name):
-    group[PREDICTED_NEW_CASES] = group[CONFIRMED_CASES].diff(-1).fillna(0.0).apply(lambda x: max(0, -x))
-    if CALCULATE_PER_100K:  # compute new cases per 100K population
-        group[PREDICTED_NEW_CASES] = group[PREDICTED_NEW_CASES].apply(
-            lambda value: 1e5 * value / ADDITIONAL_DATA_GEO[name][POPULATION])
-    return group
+def group_add_ma_a(grouped, name: str):
+    return group_add_ma_n(grouped, name, SUFFIX_MA_A, MA_WINDOW_A)
 
 
-def add_ma(group) -> pd.Series:
-    add_ma_for_series(group, group[C1], C1)
-    add_ma_for_series(group, group[C2], C2)
-    add_ma_for_series(group, group[C3], C3)
-    add_ma_for_series(group, group[C4], C4)
-    add_ma_for_series(group, group[C5], C5)
-    add_ma_for_series(group, group[C6], C6)
-    add_ma_for_series(group, group[C7], C7)
-    add_ma_for_series(group, group[C8], C8)
-    add_ma_for_series(group, group[H1], H1)
-    add_ma_for_series(group, group[H2], H2)
-    add_ma_for_series(group, group[H3], H3)
-    add_ma_for_series(group, group[H6], H6)
-    # TODO:, we can't use this until it is added into the predictor
-    # add_ma_for_series(group, group[CONFIRMED_CASES], CONFIRMED_CASES)
-    return group
+def group_add_ma_b(grouped, name: str):
+    return group_add_ma_n(grouped, name, SUFFIX_MA_B, MA_WINDOW_B)
 
 
-def add_ma_for_series(group, series: pd.Series, name) -> None:
-    shifted_series = series  # series.shift(COVID_INCUBATION_PERIOD)
-    group[name + SUFFIX_MA_DIFF] = shifted_series.diff().ewm(span=MOVING_AVERAGE_SPAN).mean()
-    group[name + SUFFIX_MA_DIFF] = group[name + SUFFIX_MA_DIFF].fillna(0.0)
+def group_add_ma_c(grouped, name: str):
+    return group_add_ma_n(grouped, name, SUFFIX_MA_C, MA_WINDOW_C)
+
+
+def group_add_ma_n(grouped, name: str, suffix: str, window: int):
+    name_ma = name + suffix
+    # shift by 1 so we look only at past days
+    # NOTE: the shift is also important so we don't include today's predicted data in the value
+    grouped[name_ma] = grouped[name].copy().shift(1).bfill().ffill()  # NOTE copy is needed?
+    grouped[name_ma] = grouped[name_ma].rolling(window=window, min_periods=1).mean().bfill().ffill()
+    return grouped
 
 
 def truncate_last_day(df: pd.DataFrame) -> pd.DataFrame:
@@ -128,12 +135,3 @@ def date_range(start_date, end_date):
     days = int((end_date - start_date).days) + 1
     for n in range(int(days)):
         yield start_date + timedelta(n)
-
-
-def add_population_info(df: pd.DataFrame) -> pd.DataFrame:
-    log("adding population info")
-    df[POPULATION] = df[GEO_ID].apply(
-        lambda x: datasets_additional_info.ADDITIONAL_DATA_GEO[x][POPULATION])
-    df[POPULATION_DENSITY] = df[GEO_ID].apply(
-        lambda x: datasets_additional_info.ADDITIONAL_DATA_GEO[x][POPULATION_DENSITY])
-    return df

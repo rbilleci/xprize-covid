@@ -1,6 +1,5 @@
 import datetime
 
-CALCULATE_PER_100K = True
 """
 When considering the date/time we start predicting from...
 
@@ -13,96 +12,118 @@ DATE_LOWER_BOUND = datetime.date(2020, 1, 1)
 DATE_UPPER_BOUND = datetime.date(2021, 12, 31)
 DATE_ORDINAL_LOWER_BOUND = DATE_LOWER_BOUND.toordinal()
 DATE_ORDINAL_UPPER_BOUND = DATE_UPPER_BOUND.toordinal()
-LABEL_SCALING = 1e6
 
 # dataset may change daily, but it seems we have to strip off two days of garbage data at the end...
 DAYS_TO_STRIP_FROM_DATASET = 2
 
+USE_CASES_PER_100K = False
+
+MA_WINDOW_A = 3
+MA_WINDOW_B = 7
+MA_WINDOW_C = 21
+
+SUFFIX_MA_A = "_ma_a"
+SUFFIX_MA_B = "_ma_b"
+SUFFIX_MA_C = "_ma_c"
+
+# Values we must calculate during prediction
+PREDICTED_NEW_CASES = 'PredictedDailyNewCases'
+PREDICTED_NEW_CASES_MA_A = PREDICTED_NEW_CASES + SUFFIX_MA_A
+PREDICTED_NEW_CASES_MA_B = PREDICTED_NEW_CASES + SUFFIX_MA_B
+PREDICTED_NEW_CASES_MA_C = PREDICTED_NEW_CASES + SUFFIX_MA_C
+CONFIRMED_CASES = "ConfirmedCases"
+CONFIRMED_CASES_MA_A = CONFIRMED_CASES + SUFFIX_MA_A
+CONFIRMED_CASES_MA_B = CONFIRMED_CASES + SUFFIX_MA_B
+CONFIRMED_CASES_MA_C = CONFIRMED_CASES + SUFFIX_MA_C
+
+# NPI COLUMNS
+C1 = "C1_School closing"
+C1_MA_A = C1 + SUFFIX_MA_A
+C1_MA_B = C1 + SUFFIX_MA_B
+C1_MA_C = C1 + SUFFIX_MA_C
+C2 = "C2_Workplace closing"
+C2_MA_A = C2 + SUFFIX_MA_A
+C2_MA_B = C2 + SUFFIX_MA_B
+C2_MA_C = C2 + SUFFIX_MA_C
+C3 = "C3_Cancel public events"
+C3_MA_A = C3 + SUFFIX_MA_A
+C3_MA_B = C3 + SUFFIX_MA_B
+C3_MA_C = C3 + SUFFIX_MA_C
+C4 = "C4_Restrictions on gatherings"
+C4_MA_A = C4 + SUFFIX_MA_A
+C4_MA_B = C4 + SUFFIX_MA_B
+C4_MA_C = C4 + SUFFIX_MA_C
+C5 = "C5_Close public transport"
+C5_MA_A = C5 + SUFFIX_MA_A
+C5_MA_B = C5 + SUFFIX_MA_B
+C5_MA_C = C5 + SUFFIX_MA_C
+C6 = "C6_Stay at home requirements"
+C6_MA_A = C6 + SUFFIX_MA_A
+C6_MA_B = C6 + SUFFIX_MA_B
+C6_MA_C = C6 + SUFFIX_MA_C
+C7 = "C7_Restrictions on internal movement"
+C7_MA_A = C7 + SUFFIX_MA_A
+C7_MA_B = C7 + SUFFIX_MA_B
+C7_MA_C = C7 + SUFFIX_MA_C
+C8 = "C8_International travel controls"
+C8_MA_A = C8 + SUFFIX_MA_A
+C8_MA_B = C8 + SUFFIX_MA_B
+C8_MA_C = C8 + SUFFIX_MA_C
+H1 = "H1_Public information campaigns"
+H1_MA_A = H1 + SUFFIX_MA_A
+H1_MA_B = H1 + SUFFIX_MA_B
+H1_MA_C = H1 + SUFFIX_MA_C
+H2 = "H2_Testing policy"
+H2_MA_A = H2 + SUFFIX_MA_A
+H2_MA_B = H2 + SUFFIX_MA_B
+H2_MA_C = H2 + SUFFIX_MA_C
+H3 = "H3_Contact tracing"
+H3_MA_A = H3 + SUFFIX_MA_A
+H3_MA_B = H3 + SUFFIX_MA_B
+H3_MA_C = H3 + SUFFIX_MA_C
+H6 = "H6_Facial Coverings"
+H6_MA_A = H6 + SUFFIX_MA_A
+H6_MA_B = H6 + SUFFIX_MA_B
+H6_MA_C = H6 + SUFFIX_MA_C
+
+# Other columns
 GEO_ID = 'GEO_ID'
 COUNTRY_NAME = 'CountryName'
 COUNTRY_CODE = 'CountryCode'
 REGION_NAME = 'RegionName'
 REGION_CODE = 'RegionCode'
 DATE = 'Date'
-C1 = "C1_School closing"
-C2 = "C2_Workplace closing"
-C3 = "C3_Cancel public events"
-C4 = "C4_Restrictions on gatherings"
-C5 = "C5_Close public transport"
-C6 = "C6_Stay at home requirements"
-C7 = "C7_Restrictions on internal movement"
-C8 = "C8_International travel controls"
-CONFIRMED_CASES = "ConfirmedCases"
 CONFIRMED_DEATHS = "ConfirmedDeaths"
-H1 = "H1_Public information campaigns"
-H2 = "H2_Testing policy"
-H3 = "H3_Contact tracing"
-H6 = "H6_Facial Coverings"
-PREDICTED_NEW_CASES = 'PredictedDailyNewCases'
+
+# Supplemental columns
 POPULATION_DENSITY = 'PopulationDensity'
 POPULATION = 'Population'
-
-SUFFIX_MA = "_ma"
-SUFFIX_MA_DIFF = SUFFIX_MA + "_diff"
-
-COVID_INCUBATION_PERIOD = 5
-MOVING_AVERAGE_SPAN = 14
 
 TRAINING_DATA_START_DATE = datetime.date(2020, 2, 1)  # don't train on earlier data
 
 INPUT_SCALE = {
-    # C1
-    C1: 3.0,
-    C1 + SUFFIX_MA: 3.0,
-    C1 + SUFFIX_MA_DIFF: 3.0,
-    # C2
-    C2: 3.0,
-    C2 + SUFFIX_MA: 3.0,
-    C2 + SUFFIX_MA_DIFF: 3.0,
-    # C3
-    C3: 2.0,
-    C3 + SUFFIX_MA: 2.0,
-    C3 + SUFFIX_MA_DIFF: 2.0,
-    # C4
-    C4: 4.0,
-    C4 + SUFFIX_MA: 4.0,
-    C4 + SUFFIX_MA_DIFF: 4.0,
-    # C5
-    C5: 2.0,
-    C5 + SUFFIX_MA: 2.0,
-    C5 + SUFFIX_MA_DIFF: 2.0,
-    # C6
-    C6: 3.0,
-    C6 + SUFFIX_MA: 3.0,
-    C6 + SUFFIX_MA_DIFF: 3.0,
-    # C7
-    C7: 2.0,
-    C7 + SUFFIX_MA: 2.0,
-    C7 + SUFFIX_MA_DIFF: 2.0,
-    # C8
-    C8: 4.0,
-    C8 + SUFFIX_MA: 4.0,
-    C8 + SUFFIX_MA_DIFF: 4.0,
-    # H1
-    H1: 2.0,
-    H1 + SUFFIX_MA: 2.0,
-    H1 + SUFFIX_MA_DIFF: 2.0,
-    # H2
-    H2: 3.0,
-    H2 + SUFFIX_MA: 3.0,
-    H2 + SUFFIX_MA_DIFF: 3.0,
-    # H3
-    H3: 2.0,
-    H3 + SUFFIX_MA: 2.0,
-    H3 + SUFFIX_MA_DIFF: 2.0,
-    # H6
-    H6: 4.0,
-    H6 + SUFFIX_MA: 4.0,
-    H6 + SUFFIX_MA_DIFF: 4.0,
+    C1: 3.0, C1_MA_A: 3.0, C1_MA_B: 3.0, C1_MA_C: 3.0,
+    C2: 3.0, C2_MA_A: 3.0, C2_MA_B: 3.0, C2_MA_C: 3.0,
+    C3: 2.0, C3_MA_A: 2.0, C3_MA_B: 2.0, C3_MA_C: 2.0,
+    C4: 4.0, C4_MA_A: 4.0, C4_MA_B: 4.0, C4_MA_C: 4.0,
+    C5: 2.0, C5_MA_A: 2.0, C5_MA_B: 2.0, C5_MA_C: 2.0,
+    C6: 3.0, C6_MA_A: 3.0, C6_MA_B: 3.0, C6_MA_C: 3.0,
+    C7: 2.0, C7_MA_A: 2.0, C7_MA_B: 2.0, C7_MA_C: 2.0,
+    C8: 4.0, C8_MA_A: 4.0, C8_MA_B: 4.0, C8_MA_C: 4.0,
+    H1: 2.0, H1_MA_A: 2.0, H1_MA_B: 2.0, H1_MA_C: 2.0,
+    H2: 3.0, H2_MA_A: 3.0, H2_MA_B: 3.0, H2_MA_C: 3.0,
+    H3: 2.0, H3_MA_A: 2.0, H3_MA_B: 2.0, H3_MA_C: 2.0,
+    H6: 4.0, H6_MA_A: 4.0, H6_MA_B: 4.0, H6_MA_C: 4.0,
     # CONFIRMED CASES
-    CONFIRMED_CASES: 1e8,  # 100 million
+    CONFIRMED_CASES: 1e8,  # 100 million,
+    CONFIRMED_CASES_MA_A: 1e8,  # 100 million
+    CONFIRMED_CASES_MA_B: 1e8,  # 100 million
+    CONFIRMED_CASES_MA_C: 1e8,  # 100 million
     # NEW CASES
-    PREDICTED_NEW_CASES: LABEL_SCALING,
+    PREDICTED_NEW_CASES: 1e6,
+    PREDICTED_NEW_CASES_MA_A: 1e6,  # 100 million
+    PREDICTED_NEW_CASES_MA_B: 1e6,  # 100 million
+    PREDICTED_NEW_CASES_MA_C: 1e6,  # 100 million
     POPULATION: 1e10,
     POPULATION_DENSITY: 1e5  # max 100K
 }
