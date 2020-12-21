@@ -25,12 +25,12 @@ class HP:
     LOSS = tf.keras.losses.MeanSquaredError()  # 'log_cosh'
     LAYER_SIZE = 200  # 200
     LAYERS = 2  # 2
-    LAYER_DROPOUT = False
+    LAYER_DROPOUT = True
     LAYER_DROPOUT_RATE = 0.25
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
     DAYS_FOR_VALIDATION = 31  # 31
     DAYS_FOR_TEST = 10  # 14
-    TRAINING_EPOCHS = 20
+    TRAINING_EPOCHS = 500
     TRAINING_BATCH_SIZE = 32
     VERBOSE = 2
     EARLY_STOPPING_PATIENCE = 100
