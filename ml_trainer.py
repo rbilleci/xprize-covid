@@ -20,7 +20,7 @@ from xlogger import log
 
 class HP:
     KERNEL_INITIALIZER = 'random_normal'  # 'random_normal'
-    OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.0001)#)
+    OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.0001)  # )
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = tf.keras.losses.MeanSquaredError()  # 'log_cosh'
     LAYER_SIZE = 200  # 200

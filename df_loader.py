@@ -74,7 +74,7 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_b(group, CONFIRMED_CASES)).reset_index(drop=True)
     df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_c(group, CONFIRMED_CASES)).reset_index(drop=True)
 
-    # Add Moving Averages for confirmed cases
+    # Add Moving Averages for predicted cases
     df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_a(group, PREDICTED_NEW_CASES)).reset_index(drop=True)
     df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_b(group, PREDICTED_NEW_CASES)).reset_index(drop=True)
     df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_c(group, PREDICTED_NEW_CASES)).reset_index(drop=True)
@@ -102,6 +102,9 @@ def group_impute(grouped):
 def group_label(grouped):
     grouped[PREDICTED_NEW_CASES] = grouped[CONFIRMED_CASES].copy()
     grouped[PREDICTED_NEW_CASES] = grouped[PREDICTED_NEW_CASES].diff(-1).fillna(0.0).apply(lambda x: max(0, -x))
+    if USE_CASES_PER_100K:
+        population = ADDITIONAL_DATA_GEO[grouped.name][POPULATION]
+        grouped[PREDICTED_NEW_CASES] = grouped[PREDICTED_NEW_CASES].apply(lambda value: (1e5 * value / population))
     return grouped
 
 

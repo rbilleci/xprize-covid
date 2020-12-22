@@ -17,7 +17,7 @@ class HP:
     KERNEL_INITIALIZER = 'random_normal'  # 'random_normal'
     OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.0001)  # )
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
-    LOSS = tf.keras.losses.MeanSquaredError()  # 'log_cosh'
+    LOSS = tf.keras.losses.MeanSquaredError()
     LAYER_SIZE = 200  # 200
     LAYERS = 2  # 2
     LAYER_DROPOUT = False
@@ -109,8 +109,9 @@ def walk_and_chew_gum(model_name: str):
 
     model = get_model(train_and_validation.shape[1] - 1)
     records = train_and_validation.shape[0]
-    records_per_step = int(records / 200)
-    epochs_per_step = 4
+    records_per_step = int(records / 100)
+    epochs_per_step = 2
+
     i = 0
     while i < records:
         i += records_per_step
@@ -128,7 +129,7 @@ def walk_and_chew_gum(model_name: str):
         # model.train_on_batch()
         # model.reset_states()
         loss_test = model.evaluate(test_x, test_y)
-        log(f"loss, test: {loss_test}")
+        log(f"{loss_test}")
 
     for i in range(0, 20):
         # expected value

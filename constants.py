@@ -1,5 +1,10 @@
 import datetime
 
+USE_CASES_PER_100K = False
+MA_WINDOW_A = 3
+MA_WINDOW_B = 7
+MA_WINDOW_C = 21
+
 """
 When considering the date/time we start predicting from...
 
@@ -15,12 +20,6 @@ DATE_ORDINAL_UPPER_BOUND = DATE_UPPER_BOUND.toordinal()
 
 # dataset may change daily, but it seems we have to strip off two days of garbage data at the end...
 DAYS_TO_STRIP_FROM_DATASET = 2
-
-USE_CASES_PER_100K = False
-
-MA_WINDOW_A = 3
-MA_WINDOW_B = 7
-MA_WINDOW_C = 21
 
 SUFFIX_MA_A = "_ma_a"
 SUFFIX_MA_B = "_ma_b"
@@ -120,10 +119,10 @@ INPUT_SCALE = {
     CONFIRMED_CASES_MA_B: 1e8,  # 100 million
     CONFIRMED_CASES_MA_C: 1e8,  # 100 million
     # NEW CASES
-    PREDICTED_NEW_CASES: 1e6,
-    PREDICTED_NEW_CASES_MA_A: 1e6,  # 100 million
-    PREDICTED_NEW_CASES_MA_B: 1e6,  # 100 million
-    PREDICTED_NEW_CASES_MA_C: 1e6,  # 100 million
+    PREDICTED_NEW_CASES: 1e5 if USE_CASES_PER_100K else 1e6,
+    PREDICTED_NEW_CASES_MA_A: 1e5 if USE_CASES_PER_100K else 1e6,
+    PREDICTED_NEW_CASES_MA_B: 1e5 if USE_CASES_PER_100K else 1e6,
+    PREDICTED_NEW_CASES_MA_C: 1e5 if USE_CASES_PER_100K else 1e6,
     POPULATION: 1e10,
     POPULATION_DENSITY: 1e5  # max 100K
 }

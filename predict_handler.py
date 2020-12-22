@@ -9,6 +9,7 @@ from tensorflow.python.keras.models import Model
 import df_loader
 import ml_transformer
 from constants import *
+from datasets_additional_info import ADDITIONAL_DATA_GEO
 from oxford_loader import df_geos
 from xlogger import log
 
@@ -83,6 +84,12 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
             predicted_cases_ma,
             confirmed_cases,
             confirmed_cases_ma)).sort_values([COUNTRY_NAME, REGION_NAME, DATE])
+
+    # Convert the predicted cases from 100K of population to actual values
+    if USE_CASES_PER_100K:
+        # TODO: TEST
+        df[PREDICTED_NEW_CASES] = df[[df[GEO_ID], df[PREDICTED_NEW_CASES], df[POPULATION]]].apply(
+            lambda r: r[PREDICTED_NEW_CASES] * ADDITIONAL_DATA_GEO[r[GEO_ID]][POPULATION] / 1e5)
 
     # save it baby!
     write_predictions(start_date, end_date, df, path_output_file)
