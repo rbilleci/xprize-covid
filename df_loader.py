@@ -1,7 +1,7 @@
 import pandas as pd
 
-from datasets_additional_info import *
 import oxford_loader
+from datasets_geo import *
 from constants import *
 from xlogger import log
 from datetime import date, timedelta
@@ -64,8 +64,16 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.sort_values(DATE)
 
     # Add population info
-    df[POPULATION] = df[GEO_ID].apply(lambda geo_id: ADDITIONAL_DATA_GEO[geo_id][POPULATION])
-    df[POPULATION_DENSITY] = df[GEO_ID].apply(lambda geo_id: ADDITIONAL_DATA_GEO[geo_id][POPULATION_DENSITY])
+    df[POPULATION] = df[GEO_ID].apply(lambda geo_id: DATA_POPULATION[geo_id][POPULATION])
+    df[POPULATION_DENSITY] = df[GEO_ID].apply(lambda geo_id: DATA_POPULATION[geo_id][POPULATION_DENSITY])
+
+    # Add the age info
+    if ADD_AGE_BINS:
+        df[AGE_R1] = df[GEO_ID].apply(lambda geo_id: DATA_AGE[geo_id][AGE_R1])
+        df[AGE_R2] = df[GEO_ID].apply(lambda geo_id: DATA_AGE[geo_id][AGE_R2])
+        df[AGE_R3] = df[GEO_ID].apply(lambda geo_id: DATA_AGE[geo_id][AGE_R3])
+        df[AGE_R4] = df[GEO_ID].apply(lambda geo_id: DATA_AGE[geo_id][AGE_R4])
+        df[AGE_R5] = df[GEO_ID].apply(lambda geo_id: DATA_AGE[geo_id][AGE_R5])
 
     # Fill missing values
     df = df.groupby(GEO_ID).apply(group_impute).reset_index(drop=True)
@@ -92,6 +100,7 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
         df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_a(group, column)).reset_index(drop=True)
         df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_b(group, column)).reset_index(drop=True)
         df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_c(group, column)).reset_index(drop=True)
+        # drop the original NPI column
     # drop redundant input
     df = df.drop([C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6], axis=1)
     return df

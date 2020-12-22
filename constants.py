@@ -1,6 +1,8 @@
 import datetime
 
+ADD_AGE_BINS = True
 CALCULATE_AS_PERCENT_OF_POPULATION = False
+
 MA_WINDOW_A = 3
 MA_WINDOW_B = 7
 MA_WINDOW_C = 21
@@ -85,6 +87,13 @@ H6_MA_A = H6 + SUFFIX_MA_A
 H6_MA_B = H6 + SUFFIX_MA_B
 H6_MA_C = H6 + SUFFIX_MA_C
 
+# AGE INFO
+AGE_R1 = 'R1'
+AGE_R2 = 'R2'
+AGE_R3 = 'R3'
+AGE_R4 = 'R4'
+AGE_R5 = 'R5'
+
 # Other columns
 GEO_ID = 'GEO_ID'
 COUNTRY_NAME = 'CountryName'
@@ -101,6 +110,9 @@ POPULATION = 'Population'
 TRAINING_DATA_START_DATE = datetime.date(2020, 2, 1)  # don't train on earlier data
 
 INPUT_SCALE = {
+    # AGE BINS
+    AGE_R1: 1.0, AGE_R2: 1.0, AGE_R3: 1.0, AGE_R4: 1.0, AGE_R5: 1.0,
+    # NPI
     C1: 3.0, C1_MA_A: 3.0, C1_MA_B: 3.0, C1_MA_C: 3.0,
     C2: 3.0, C2_MA_A: 3.0, C2_MA_B: 3.0, C2_MA_C: 3.0,
     C3: 2.0, C3_MA_A: 2.0, C3_MA_B: 2.0, C3_MA_C: 2.0,
