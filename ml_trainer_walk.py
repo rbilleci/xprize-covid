@@ -1,9 +1,8 @@
-import pandas as pd
-from tensorflow.python.keras.callbacks import EarlyStopping
-from tensorflow.python.keras.layers import Dense, LeakyReLU, Dropout, PReLU, ELU
-from tensorflow.python.keras.models import Sequential
-import tensorflow as tf
 import numpy as np
+import pandas as pd
+import tensorflow as tf
+from tensorflow.python.keras.layers import Dense, LeakyReLU, Dropout, ELU, PReLU
+from tensorflow.python.keras.models import Sequential
 
 import constants
 import ml_splitter
@@ -17,7 +16,7 @@ class HP:
     KERNEL_INITIALIZER = 'random_normal'  # 'random_normal'  # 'random_normal'
     OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.0001)  # )
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
-    LOSS = tf.keras.losses.Poisson()
+    LOSS = 'poisson'
     LAYER_SIZE = 200  # 200
     LAYERS = 3  # 2
     LAYER_DROPOUT = False
@@ -70,6 +69,7 @@ def get_model_prelu(model, dimensions) -> None:
             model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER, input_dim=dimensions))
         else:
             model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER))
+        model.add(PReLU())
         # add dropout
         if HP.LAYER_DROPOUT:
             model.add(Dropout(HP.LAYER_DROPOUT_RATE))
@@ -111,31 +111,32 @@ def walk_and_chew_gum(model_name: str):
     records_per_step = int(records / 100)
     epochs_per_step = 2
 
-    i = records_per_step  # not sure if this stopping condition is right...
-    while i < records:
-        current_train, current_validation = train_and_validation[0:i], train_and_validation[i:i + records_per_step]
-        # TODO test this out
-        if len(current_validation) < (records_per_step/2):
-            break
-        print('train=%d, validation=%d' % (len(current_train), len(current_validation)))
-        tx, ty = current_train.iloc[:, 1:], current_train.iloc[:, :1]
-        vx, vy = current_validation.iloc[:, 1:], current_validation.iloc[:, :1]
-        model.fit(tx,
-                  ty,
-                  validation_data=(vx, vy),
-                  batch_size=HP.TRAINING_BATCH_SIZE,
-                  epochs=epochs_per_step,
-                  callbacks=HP.CALLBACKS,
-                  verbose=0)
-        # increment, and check if we re done
-        i += records_per_step
-        if i + records_per_step > records:
-            break
+    for z in range(0, 1):
+        i = records_per_step  # not sure if this stopping condition is right...
+        while i < records:
+            current_train, current_validation = train_and_validation[0:i], train_and_validation[i:i + records_per_step]
+            # TODO test this out
+            if len(current_validation) < (records_per_step/2):
+                break
+            print('train=%d, validation=%d' % (len(current_train), len(current_validation)))
+            tx, ty = current_train.iloc[:, 1:], current_train.iloc[:, :1]
+            vx, vy = current_validation.iloc[:, 1:], current_validation.iloc[:, :1]
+            model.fit(tx,
+                      ty,
+                      validation_data=(vx, vy),
+                      batch_size=HP.TRAINING_BATCH_SIZE,
+                      epochs=epochs_per_step,
+                      callbacks=HP.CALLBACKS,
+                      verbose=0)
+            # increment, and check if we re done
+            i += records_per_step
+            if i + records_per_step > records:
+                break
 
-        # model.train_on_batch()
-        # model.reset_states()
-        loss_test = model.evaluate(test_x, test_y)
-        log(f"{loss_test}")
+            # model.train_on_batch()
+            # model.reset_states()
+            loss_test = model.evaluate(test_x, test_y)
+            log(f"{z} / {loss_test}")
 
     for i in range(0, 20):
         # expected value
