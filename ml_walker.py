@@ -126,33 +126,44 @@ def save(model, model_name: str):
     model.save(f"models/{model_name}", overwrite=True, include_optimizer=True, save_format='tf')
 
 
-def walk_and_chew_gum(model_name: str):
+def walk_and_train(model_name: str):
     train_and_validation, test = get_data()
     test_x, test_y = test.iloc[:, 1:], test.iloc[:, :1]  # get the test set we'll use at the end
     model = get_model(train_and_validation.shape[1] - 1)
     records = train_and_validation.shape[0]
     records_per_step = int(records / HP.TRAINING_STEPS)
+    validation_window_multiplier = 2
 
     # The number of training rounds
     for z in range(0, HP.ROUNDS):
         # Step through the dataset
         for step in range(0, HP.TRAINING_STEPS):
+
+            # get the ranges we'll work from
             val_start = records_per_step * (step + 1)
-            val_end = val_start + records_per_step
-            current_train, current_validation = (train_and_validation[0:val_start],
-                                                 train_and_validation[val_start:val_end])
+            val_end = val_start + (validation_window_multiplier * records_per_step)
+
+            # make sure there is sufficient validation data available to run an iteration
+            if (records - val_start) < records_per_step:
+                break
+
+            # slice our training and validation sets
+            train, val = train_and_validation[0:val_start], train_and_validation[val_start:val_end]
 
             # Get the train and val data, then train the model
-            tx, ty = current_train.iloc[:, 1:], current_train.iloc[:, :1]
-            vx, vy = current_validation.iloc[:, 1:], current_validation.iloc[:, :1]
+            tx, ty = train.iloc[:, 1:], train.iloc[:, :1]
+            vx, vy = val.iloc[:, 1:], val.iloc[:, :1]
             model.fit(tx, ty, validation_data=(vx, vy), batch_size=HP.TRAINING_BATCH_SIZE, epochs=HP.TRAINING_EPOCHS,
                       callbacks=HP.CALLBACKS, verbose=HP.VERBOSE)
 
             # Evaluate the test data
             loss_test = model.evaluate(test_x, test_y, verbose=HP.VERBOSE)
-            log(f"{z}, {step}/{HP.TRAINING_STEPS}, "
-                f"{len(current_train)}, {len(current_validation)}, {loss_test[0]}, {loss_test[1]}")
+            log(f"{z}, {step}/{HP.TRAINING_STEPS}, {len(train)}, {len(val)}, {loss_test[0]}, {loss_test[1]}")
 
+    # save the final model
+    save(model, model_name)
+
+    # verify
     for i in range(0, 20):
         # expected value
         df_output = test_y.iloc[i]
@@ -166,13 +177,11 @@ def walk_and_chew_gum(model_name: str):
         expected = expected * constants.INPUT_SCALE[PREDICTED_NEW_CASES]
         predicted = predicted * constants.INPUT_SCALE[PREDICTED_NEW_CASES]
         log(f"EXPECTED/PREDICTED:\t{expected} vs {predicted}")
-    save(model, model_name)
 
 
 # Train to get the model for confirmed cases
-
 pd.options.display.max_columns = 4
 pd.options.display.max_rows = 1000
 pd.options.display.max_info_columns = 1000
 
-walk_and_chew_gum(PREDICTED_NEW_CASES)
+walk_and_train(PREDICTED_NEW_CASES)
