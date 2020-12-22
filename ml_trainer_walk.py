@@ -150,8 +150,8 @@ def walk_and_chew_gum(model_name: str):
 
             # Evaluate the test data
             loss_test = model.evaluate(test_x, test_y, verbose=HP.VERBOSE)
-            log(f"R={z}[{step}/P{HP.TRAINING_STEPS}] "
-                f"T={len(current_train)}, V={len(current_validation)}, SCORE = {loss_test}")
+            log(f"{z}, {step}/{HP.TRAINING_STEPS}, "
+                f"{len(current_train)}, {len(current_validation)}, {loss_test[0]}, {loss_test[1]}")
 
     for i in range(0, 20):
         # expected value
