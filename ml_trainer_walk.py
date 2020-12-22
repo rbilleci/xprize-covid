@@ -14,12 +14,12 @@ from xlogger import log
 
 
 class HP:
-    KERNEL_INITIALIZER = 'random_normal'  # 'random_normal'
+    KERNEL_INITIALIZER = 'random_normal'  # 'random_normal'  # 'random_normal'
     OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.0001)  # )
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
-    LOSS = tf.keras.losses.MeanSquaredError()
+    LOSS = tf.keras.losses.Poisson()
     LAYER_SIZE = 200  # 200
-    LAYERS = 2  # 2
+    LAYERS = 3  # 2
     LAYER_DROPOUT = False
     LAYER_DROPOUT_RATE = 0.50
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
@@ -70,7 +70,6 @@ def get_model_prelu(model, dimensions) -> None:
             model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER, input_dim=dimensions))
         else:
             model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER))
-        model.add(PReLU())
         # add dropout
         if HP.LAYER_DROPOUT:
             model.add(Dropout(HP.LAYER_DROPOUT_RATE))
@@ -112,10 +111,12 @@ def walk_and_chew_gum(model_name: str):
     records_per_step = int(records / 100)
     epochs_per_step = 2
 
-    i = 0
+    i = records_per_step  # not sure if this stopping condition is right...
     while i < records:
-        i += records_per_step
         current_train, current_validation = train_and_validation[0:i], train_and_validation[i:i + records_per_step]
+        # TODO test this out
+        if len(current_validation) < records_per_step:
+            break
         print('train=%d, validation=%d' % (len(current_train), len(current_validation)))
         tx, ty = current_train.iloc[:, 1:], current_train.iloc[:, :1]
         vx, vy = current_validation.iloc[:, 1:], current_validation.iloc[:, :1]
@@ -126,6 +127,8 @@ def walk_and_chew_gum(model_name: str):
                   epochs=epochs_per_step,
                   callbacks=HP.CALLBACKS,
                   verbose=0)
+        i += records_per_step
+
         # model.train_on_batch()
         # model.reset_states()
         loss_test = model.evaluate(test_x, test_y)
