@@ -75,7 +75,7 @@ def walk_and_train(model_name: str):
     train, val, test = get_data()
     print(f"input dimensions should be{(train.shape[1] - 1)}")
     tuner = kt.Hyperband(build_model,
-                         objective='val_accuracy',
+                         objective='val_root_mean_squared_error',
                          max_epochs=30,
                          hyperband_iterations=2)
 
