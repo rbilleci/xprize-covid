@@ -13,7 +13,7 @@ import ml_transformer
 from df_loader import load_ml_data
 from xlogger import log
 
-INPUT_DIMENSIONS = 352
+INPUT_DIMENSIONS = 358
 DAYS_FOR_TEST = 10
 MAX_TRIALS = 100
 

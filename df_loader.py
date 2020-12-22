@@ -64,10 +64,12 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.sort_values(DATE)
 
     # Add population info
+    log("adding population information")
     df[POPULATION] = df[GEO_ID].apply(lambda geo_id: DATA_POPULATION[geo_id][POPULATION])
     df[POPULATION_DENSITY] = df[GEO_ID].apply(lambda geo_id: DATA_POPULATION[geo_id][POPULATION_DENSITY])
 
     # Add the age info
+    log("adding age information")
     if ADD_AGE_BINS:
         df[AGE_R1] = df[GEO_ID].apply(lambda geo_id: DATA_AGE[geo_id][AGE_R1])
         df[AGE_R2] = df[GEO_ID].apply(lambda geo_id: DATA_AGE[geo_id][AGE_R2])
@@ -76,6 +78,7 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
         df[AGE_R5] = df[GEO_ID].apply(lambda geo_id: DATA_AGE[geo_id][AGE_R5])
 
     # Fill missing values
+    log("filling missing values")
     df = df.groupby(GEO_ID).apply(group_impute).reset_index(drop=True)
 
     # Set confirmed cases as percent of population
@@ -83,26 +86,44 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
         df[CONFIRMED_CASES] = df[CONFIRMED_CASES] / df[POPULATION]
 
     # Calculate the predicted cases
+    log("calculating predicted cases")
     df = df.groupby(GEO_ID).apply(group_label).reset_index(drop=True)
 
+    # Add Temperature and humidity information
+    log("adding temperature and humidity information")
+    if ADD_SPECIFIC_HUMIDITY_INFO or ADD_TEMPERATURE_INFO:
+        df_geo_temps = load_geo_temps()
+        df = pd.merge(df, df_geo_temps, how='left', left_on=[GEO_ID, DATE], right_on=[GEO_ID, DATE])
+        if ADD_TEMPERATURE_INFO:
+            df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_a(group, TEMPERATURE)).reset_index(drop=True)
+            df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_b(group, TEMPERATURE)).reset_index(drop=True)
+            df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_c(group, TEMPERATURE)).reset_index(drop=True)
+        if ADD_SPECIFIC_HUMIDITY_INFO:
+            df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_a(group, SPECIFIC_HUMIDITY)).reset_index(drop=True)
+            df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_b(group, SPECIFIC_HUMIDITY)).reset_index(drop=True)
+            df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_c(group, SPECIFIC_HUMIDITY)).reset_index(drop=True)
+        df = df.drop([TEMPERATURE, SPECIFIC_HUMIDITY], axis=1)
+
     # Add Moving Averages for confirmed cases
+    log("adding moving averages for confirmed cases")
     df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_a(group, CONFIRMED_CASES)).reset_index(drop=True)
     df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_b(group, CONFIRMED_CASES)).reset_index(drop=True)
     df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_c(group, CONFIRMED_CASES)).reset_index(drop=True)
 
     # Add Moving Averages for predicted cases
+    log("adding moving averages for predicted cases")
     df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_a(group, PREDICTED_NEW_CASES)).reset_index(drop=True)
     df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_b(group, PREDICTED_NEW_CASES)).reset_index(drop=True)
     df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_c(group, PREDICTED_NEW_CASES)).reset_index(drop=True)
 
     # Add npi column moving averages
+    log("adding moving averages for NPI columns")
     for column in NPI_COLUMNS:
         df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_a(group, column)).reset_index(drop=True)
         df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_b(group, column)).reset_index(drop=True)
         df = df.groupby(GEO_ID).apply(lambda group: group_add_ma_c(group, column)).reset_index(drop=True)
-        # drop the original NPI column
-    # drop redundant input
     df = df.drop([C1, C2, C3, C4, C5, C6, C7, C8, H1, H2, H3, H6], axis=1)
+
     return df
 
 
@@ -152,3 +173,20 @@ def date_range(start_date, end_date):
     days = int((end_date - start_date).days) + 1
     for n in range(int(days)):
         yield start_date + timedelta(n)
+
+
+def load_geo_temps():
+    try:
+        tmp = pd.read_csv(REFERENCE_TEMPERATURES)
+        tmp[REGION_NAME] = tmp[REGION_NAME].fillna('')
+        tmp[GEO_ID] = tmp[COUNTRY_NAME] + tmp[REGION_NAME]
+        tmp = tmp.drop([COUNTRY_NAME, REGION_NAME], axis=1)
+        tmp[DATE] = pd.to_datetime(tmp[DATE])
+        return tmp
+    except FileNotFoundError:
+        tmp = pd.read_csv('work/' + REFERENCE_TEMPERATURES)
+        tmp[REGION_NAME] = tmp[REGION_NAME].fillna('')
+        tmp[GEO_ID] = tmp[COUNTRY_NAME] + tmp[REGION_NAME]
+        tmp = tmp.drop([COUNTRY_NAME, REGION_NAME], axis=1)
+        tmp[DATE] = pd.to_datetime(tmp[DATE])
+        return tmp
