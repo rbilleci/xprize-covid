@@ -66,7 +66,15 @@ def prepare_data(df: pd.DataFrame) -> pd.DataFrame:
     # Add population info
     df[POPULATION] = df[GEO_ID].apply(lambda geo_id: ADDITIONAL_DATA_GEO[geo_id][POPULATION])
     df[POPULATION_DENSITY] = df[GEO_ID].apply(lambda geo_id: ADDITIONAL_DATA_GEO[geo_id][POPULATION_DENSITY])
+
+    # Fill missing values
     df = df.groupby(GEO_ID).apply(group_impute).reset_index(drop=True)
+
+    # Set confirmed cases as percent of population
+    if CALCULATE_AS_PERCENT_OF_POPULATION:
+        df[CONFIRMED_CASES] = df[CONFIRMED_CASES] / df[POPULATION]
+
+    # Calculate the predicted cases
     df = df.groupby(GEO_ID).apply(group_label).reset_index(drop=True)
 
     # Add Moving Averages for confirmed cases
@@ -102,9 +110,6 @@ def group_impute(grouped):
 def group_label(grouped):
     grouped[PREDICTED_NEW_CASES] = grouped[CONFIRMED_CASES].copy()
     grouped[PREDICTED_NEW_CASES] = grouped[PREDICTED_NEW_CASES].diff(-1).fillna(0.0).apply(lambda x: max(0, -x))
-    if USE_CASES_PER_100K:
-        population = ADDITIONAL_DATA_GEO[grouped.name][POPULATION]
-        grouped[PREDICTED_NEW_CASES] = grouped[PREDICTED_NEW_CASES].apply(lambda value: (1e5 * value / population))
     return grouped
 
 

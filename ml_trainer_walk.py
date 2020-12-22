@@ -115,7 +115,7 @@ def walk_and_chew_gum(model_name: str):
     while i < records:
         current_train, current_validation = train_and_validation[0:i], train_and_validation[i:i + records_per_step]
         # TODO test this out
-        if len(current_validation) < records_per_step:
+        if len(current_validation) < (records_per_step/2):
             break
         print('train=%d, validation=%d' % (len(current_train), len(current_validation)))
         tx, ty = current_train.iloc[:, 1:], current_train.iloc[:, :1]
@@ -127,7 +127,10 @@ def walk_and_chew_gum(model_name: str):
                   epochs=epochs_per_step,
                   callbacks=HP.CALLBACKS,
                   verbose=0)
+        # increment, and check if we re done
         i += records_per_step
+        if i + records_per_step > records:
+            break
 
         # model.train_on_batch()
         # model.reset_states()
