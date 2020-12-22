@@ -13,20 +13,22 @@ from xlogger import log
 
 
 class HP:
-    KERNEL_INITIALIZER = 'random_normal'  # 'random_normal'  # 'random_normal'
-    OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.0001)  # )
+    KERNEL_INITIALIZER = 'random_normal'
+    OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.0001)
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = 'poisson'
-    LAYER_SIZE = 200  # 200
-    LAYERS = 3  # 2
-    LAYER_DROPOUT = True
-    LAYER_DROPOUT_RATE = 0.10
-    OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
-    DAYS_FOR_VALIDATION = 0  # 31
-    DAYS_FOR_TEST = 10  # 14
-    TRAINING_EPOCHS = 100
+    LAYER_SIZE = 200
+    LAYERS = 3
+    LAYER_DROPOUT = False
+    LAYER_DROPOUT_RATE = 0.50
+    OUTPUT_ACTIVATION = 'sigmoid'
+    DAYS_FOR_VALIDATION = 0
+    DAYS_FOR_TEST = 10
+    TRAINING_EPOCHS = 2
     TRAINING_BATCH_SIZE = 32
-    VERBOSE = 2
+    TRAINING_STEPS = 128
+    ROUNDS = 1
+    VERBOSE = 0
     EARLY_STOPPING_PATIENCE = 1000
     CALLBACKS = []  # EarlyStopping(patience=EARLY_STOPPING_PATIENCE, restore_best_weights=True)]
 
@@ -37,6 +39,28 @@ def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Da
     train_and_validation = ml_transformer.transform(train_and_validation, for_prediction=False)
     test = ml_transformer.transform(test, for_prediction=False)
     return train_and_validation, test
+
+
+def get_model_sigmoid(model, dimensions) -> None:
+    for i in range(0, HP.LAYERS):
+        if i == 0:
+            model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER, input_dim=dimensions))
+        else:
+            model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER, activation='sigmoid'))
+        # add dropout
+        if HP.LAYER_DROPOUT:
+            model.add(Dropout(HP.LAYER_DROPOUT_RATE))
+
+
+def get_model_tanh(model, dimensions) -> None:
+    for i in range(0, HP.LAYERS):
+        if i == 0:
+            model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER, input_dim=dimensions))
+        else:
+            model.add(Dense(HP.LAYER_SIZE, kernel_initializer=HP.KERNEL_INITIALIZER, activation='tanh'))
+        # add dropout
+        if HP.LAYER_DROPOUT:
+            model.add(Dropout(HP.LAYER_DROPOUT_RATE))
 
 
 def get_model_relu(model, dimensions) -> None:
@@ -104,39 +128,30 @@ def save(model, model_name: str):
 
 def walk_and_chew_gum(model_name: str):
     train_and_validation, test = get_data()
-    test_x, test_y = test.iloc[:, 1:], test.iloc[:, :1]
-
+    test_x, test_y = test.iloc[:, 1:], test.iloc[:, :1]  # get the test set we'll use at the end
     model = get_model(train_and_validation.shape[1] - 1)
     records = train_and_validation.shape[0]
-    records_per_step = int(records / 100)
-    epochs_per_step = 2
+    records_per_step = int(records / HP.TRAINING_STEPS)
 
-    for z in range(0, 1):
-        i = records_per_step  # not sure if this stopping condition is right...
-        while i < records:
-            current_train, current_validation = train_and_validation[0:i], train_and_validation[i:i + records_per_step]
-            # TODO test this out
-            if len(current_validation) < (records_per_step/2):
-                break
-            print('train=%d, validation=%d' % (len(current_train), len(current_validation)))
+    # The number of training rounds
+    for z in range(0, HP.ROUNDS):
+        # Step through the dataset
+        for step in range(0, HP.TRAINING_STEPS):
+            val_start = records_per_step * (step + 1)
+            val_end = val_start + records_per_step
+            current_train, current_validation = (train_and_validation[0:val_start],
+                                                 train_and_validation[val_start:val_end])
+
+            # Get the train and val data, then train the model
             tx, ty = current_train.iloc[:, 1:], current_train.iloc[:, :1]
             vx, vy = current_validation.iloc[:, 1:], current_validation.iloc[:, :1]
-            model.fit(tx,
-                      ty,
-                      validation_data=(vx, vy),
-                      batch_size=HP.TRAINING_BATCH_SIZE,
-                      epochs=epochs_per_step,
-                      callbacks=HP.CALLBACKS,
-                      verbose=0)
-            # increment, and check if we re done
-            i += records_per_step
-            if i + records_per_step > records:
-                break
+            model.fit(tx, ty, validation_data=(vx, vy), batch_size=HP.TRAINING_BATCH_SIZE, epochs=HP.TRAINING_EPOCHS,
+                      callbacks=HP.CALLBACKS, verbose=HP.VERBOSE)
 
-            # model.train_on_batch()
-            # model.reset_states()
-            loss_test = model.evaluate(test_x, test_y)
-            log(f"{z} / {loss_test}")
+            # Evaluate the test data
+            loss_test = model.evaluate(test_x, test_y, verbose=HP.VERBOSE)
+            log(f"R={z}[{step}/P{HP.TRAINING_STEPS}] "
+                f"T={len(current_train)}, V={len(current_validation)}, SCORE = {loss_test}")
 
     for i in range(0, 20):
         # expected value
