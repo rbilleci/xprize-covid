@@ -19,8 +19,8 @@ class HP:
     LOSS = 'poisson'
     LAYER_SIZE = 200  # 200
     LAYERS = 3  # 2
-    LAYER_DROPOUT = False
-    LAYER_DROPOUT_RATE = 0.50
+    LAYER_DROPOUT = True
+    LAYER_DROPOUT_RATE = 0.10
     OUTPUT_ACTIVATION = 'sigmoid'  # sigmoid
     DAYS_FOR_VALIDATION = 0  # 31
     DAYS_FOR_TEST = 10  # 14
