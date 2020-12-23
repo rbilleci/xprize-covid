@@ -3,6 +3,7 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow.python.keras.layers import Dense, LeakyReLU, Dropout, ELU, PReLU
 from tensorflow.python.keras.models import Sequential
+from keras.callbacks import LearningRateScheduler
 
 import constants
 import ml_splitter
@@ -14,7 +15,7 @@ from xlogger import log
 
 class HP:
     KERNEL_INITIALIZER = 'random_normal'
-    OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.0001)
+    OPTIMIZER = tf.keras.optimizers.Adam(learning_rate=0.00005)
     METRICS = [tf.keras.metrics.RootMeanSquaredError()]
     LOSS = 'poisson'
     LAYER_SIZE = 200
@@ -26,11 +27,11 @@ class HP:
     DAYS_FOR_TEST = 10
     TRAINING_EPOCHS = 2
     TRAINING_BATCH_SIZE = 32
-    TRAINING_STEPS = 128
+    TRAINING_STEPS = 200
     ROUNDS = 1
     VERBOSE = 0
     EARLY_STOPPING_PATIENCE = 1000
-    CALLBACKS = []  # EarlyStopping(patience=EARLY_STOPPING_PATIENCE, restore_best_weights=True)]
+    CALLBACKS = []
 
 
 def get_data() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame):
@@ -156,6 +157,8 @@ def walk_and_train(model_name: str):
             model.fit(tx, ty, validation_data=(vx, vy), batch_size=HP.TRAINING_BATCH_SIZE, epochs=HP.TRAINING_EPOCHS,
                       callbacks=HP.CALLBACKS, verbose=HP.VERBOSE)
 
+            # adapt the learning rate
+            tf.keras.backend
             # Evaluate the test data
             loss_test = model.evaluate(test_x, test_y, verbose=HP.VERBOSE)
             log(f"{z}, {step}/{HP.TRAINING_STEPS}, {len(train)}, {len(val)}, {loss_test[0]}, {loss_test[1]}")
