@@ -9,14 +9,6 @@ MA_WINDOW_A = 3
 MA_WINDOW_B = 7
 MA_WINDOW_C = 21
 
-"""
-When considering the date/time we start predicting from...
-
-We'll have the final reference file on the 22nd. It should have values for the 21st, so the official date we begin
-predicting values from will be on the 22nd.
-"""
-DATE_SUBMISSION_CUTOFF = datetime.date(2020, 12, 22)  # the last known date we'll use to rely on reference data
-
 DATE_LOWER_BOUND = datetime.date(2020, 1, 1)
 DATE_UPPER_BOUND = datetime.date(2021, 12, 31)
 DATE_ORDINAL_LOWER_BOUND = DATE_LOWER_BOUND.toordinal()

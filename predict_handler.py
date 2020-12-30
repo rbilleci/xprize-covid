@@ -54,14 +54,14 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
         predicted_cases_ma[geo_id] = []
 
         # try to find the most recent value for the geo
-        result = df[(df[GEO_ID] == geo_id) &
-                    (df[DATE] <= pd.to_datetime(DATE_SUBMISSION_CUTOFF)) &
-                    # for an index of -1, the date will be the 22nd: there will be no confirmed cases
-                    # for an index of -2, the date will be the 21st: there will be cases, but nothing to predict
-                    # for an index of -3, the date will be the 20th: there will be cases, and a prediction
-                    (df[CONFIRMED_CASES] > 0)].iloc[-3]
+        try:
+            result = df[(df[GEO_ID] == geo_id) &
+                        (df[DATE] <= pd.to_datetime(start_date)) &
+                        # for an index of -1, the date will be the 22nd: there will be no confirmed cases
+                        # for an index of -2, the date will be the 21st: there will be cases, but nothing to predict
+                        # for an index of -3, the date will be the 20th: there will be cases, and a prediction
+                        (df[CONFIRMED_CASES] > 0)].iloc[-3]
 
-        if result is not None:
             log(f"{geo_id}: "f"confirmed = {result[CONFIRMED_CASES]}, "f"new = {result[PREDICTED_NEW_CASES]}")
             # confirmed
             confirmed_cases[geo_id] = result[CONFIRMED_CASES]
@@ -69,12 +69,20 @@ def predict(start_date_str: str, end_date_str: str, path_future_data: str, path_
             # predicted
             predicted_cases[geo_id] = result[PREDICTED_NEW_CASES]
             predicted_cases_ma[geo_id].insert(0, result[PREDICTED_NEW_CASES_MA_B])
+        except IndexError:
+            log(f"{geo_id}: no confirmed or predicted cases found")
+            # confirmed
+            confirmed_cases[geo_id] = 0
+            confirmed_cases_ma[geo_id].insert(0, 0)
+            # predicted
+            predicted_cases[geo_id] = 0
+            predicted_cases_ma[geo_id].insert(0, 0)
 
     # load our model
     model = load_model(PREDICTED_NEW_CASES)
 
     # predict away!
-    df = df[df[DATE] >= pd.to_datetime(DATE_SUBMISSION_CUTOFF)]
+    df = df[df[DATE] >= pd.to_datetime(start_date)]
     df = df.groupby(DATE).apply(
         lambda group: predict_day(
             model,
